@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { listEntriesByLesson } from '@/api/entries'
+import { listEntriesByLesson, type LessonEntry } from '@/api/entries'
 import { getLesson, requestTranscription, subscribeLessons, type LessonWithTutor } from '@/api/lessons'
-import type { Entry, EntryType } from '@/api/types'
+import type { EntryType } from '@/api/types'
 import { Page } from '@/app/Page'
+import { DeckToggle } from '@/features/review/DeckToggle'
 import { useErrorText, useLocale, useT, type TextKey } from '@/i18n'
 import { Button, HairlineBlock, HairlineList, ReviewIcon } from '@/ui'
 import { formatLessonDate } from './format'
@@ -28,10 +29,11 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
   const { lang } = useLocale()
   const errorText = useErrorText()
   const [lesson, setLesson] = useState<LessonWithTutor | null>(null)
-  const [entries, setEntries] = useState<Entry[]>([])
+  const [entries, setEntries] = useState<LessonEntry[]>([])
   const [loadError, setLoadError] = useState<unknown>(null)
   const [retryError, setRetryError] = useState<unknown>(null)
   const [retrying, setRetrying] = useState(false)
+  const [deckError, setDeckError] = useState<unknown>(null)
 
   useEffect(() => {
     if (!id) return
@@ -60,6 +62,10 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
     }
   }
 
+  function setInDeck(id: string, inDeck: boolean) {
+    setEntries((list) => list.map((e) => (e.id === id ? { ...e, card: inDeck ? { due: new Date().toISOString() } : null } : e)))
+  }
+
   const back = embedded ? undefined : { to: '/', label: t('tabs.lessons') }
   const column = embedded ? 'lg:ml-0 lg:max-w-[720px]' : undefined
 
@@ -78,7 +84,17 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
   const groups = GROUPS.map((g) => ({ ...g, items: entries.filter((e) => e.type === g.type) })).filter(
     (g) => g.items.length > 0,
   )
-  const showReview = ready && entries.length > 0
+  const now = new Date().toISOString()
+  const dueCount = entries.filter((e) => e.card !== null && e.card.due <= now).length
+  const toggle = (entry: LessonEntry) => (
+    <DeckToggle
+      entryId={entry.id}
+      inDeck={entry.card !== null}
+      onChange={(inDeck) => setInDeck(entry.id, inDeck)}
+      onError={setDeckError}
+      className="-mt-1 -mr-2 shrink-0"
+    />
+  )
 
   return (
     <Page
@@ -102,6 +118,7 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
       )}
 
       {loadError !== null && <p className="px-6 pt-6 text-[13px] text-pen-red">{errorText(loadError)}</p>}
+      {deckError !== null && <p className="px-6 pt-6 text-[13px] text-pen-red">{errorText(deckError)}</p>}
 
       {ready && groups.length === 0 && <p className="px-6 pt-6 font-serif italic text-muted">{t('lesson.noEntries')}</p>}
 
@@ -111,15 +128,18 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
             {g.type === 'vocab' ? (
               <HairlineBlock className="grid grid-cols-2 gap-x-5 gap-y-2.5">
                 {g.items.map((entry) => (
-                  <VocabItem key={entry.id} entry={entry} />
+                  <VocabItem key={entry.id} entry={entry} toggle={toggle(entry)} />
                 ))}
               </HairlineBlock>
             ) : (
               <HairlineList>
                 {g.items.map((entry) => (
-                  <li key={entry.id} className="flex flex-col gap-1.5 py-3.5">
-                    {g.type === 'correction' ? <CorrectionText entry={entry} /> : <p className="font-serif text-[17px] leading-[1.35]">{entry.original}</p>}
-                    <EntryMeta entry={entry} />
+                  <li key={entry.id} className="flex items-start gap-2 py-3.5">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                      {g.type === 'correction' ? <CorrectionText entry={entry} /> : <p className="font-serif text-[17px] leading-[1.35]">{entry.original}</p>}
+                      <EntryMeta entry={entry} />
+                    </div>
+                    {toggle(entry)}
                   </li>
                 ))}
               </HairlineList>
@@ -135,12 +155,16 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
         )}
       </div>
 
-      {showReview && (
+      {ready && entries.length > 0 && (
         <div className="sticky bottom-0 bg-bg px-6 pt-4 pb-2">
-          <Button size="lg" full onClick={() => navigate('/review')}>
-            <ReviewIcon size={20} />
-            {t('lesson.review', { cards: t.plural('cards', entries.length) })}
-          </Button>
+          {dueCount > 0 ? (
+            <Button size="lg" full onClick={() => navigate('/review')}>
+              <ReviewIcon size={20} />
+              {t('lesson.review', { cards: t.plural('cards', dueCount) })}
+            </Button>
+          ) : (
+            <p className="text-center font-serif text-base italic text-muted">{t('lesson.allReviewed')}</p>
+          )}
         </div>
       )}
     </Page>
@@ -158,7 +182,7 @@ function Section({ title, count, children }: { title: string; count: number; chi
   )
 }
 
-function CorrectionText({ entry }: { entry: Entry }) {
+function CorrectionText({ entry }: { entry: LessonEntry }) {
   const original = <s className="text-pen-red decoration-[1.5px]">{entry.original}</s>
   const corrected = entry.corrected && <strong className="font-semibold text-ink-green">{entry.corrected}</strong>
   const stacked = entry.original.length > LONG_ORIGINAL
@@ -179,17 +203,20 @@ function CorrectionText({ entry }: { entry: Entry }) {
   )
 }
 
-function VocabItem({ entry }: { entry: Entry }) {
+function VocabItem({ entry, toggle }: { entry: LessonEntry; toggle: ReactNode }) {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <span className="font-serif text-[17px] font-semibold leading-[1.3]">{entry.original}</span>
-      {entry.corrected && <span className="text-[13px] text-muted">{entry.corrected}</span>}
-      <EntryMeta entry={entry} />
+    <div className="flex min-w-0 items-start gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="font-serif text-[17px] font-semibold leading-[1.3]">{entry.original}</span>
+        {entry.corrected && <span className="text-[13px] text-muted">{entry.corrected}</span>}
+        <EntryMeta entry={entry} />
+      </div>
+      {toggle}
     </div>
   )
 }
 
-function EntryMeta({ entry }: { entry: Entry }) {
+function EntryMeta({ entry }: { entry: LessonEntry }) {
   const t = useT()
   return (
     <>

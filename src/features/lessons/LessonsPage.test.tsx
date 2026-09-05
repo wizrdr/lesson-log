@@ -5,7 +5,7 @@ import type { Tutor } from '@/api/types'
 
 const listLessons = vi.fn()
 const listTutors = vi.fn()
-const countDueCards = vi.fn()
+const deckStats = vi.fn()
 const listRecurringCorrections = vi.fn()
 
 vi.mock('@/api/lessons', () => ({
@@ -14,7 +14,7 @@ vi.mock('@/api/lessons', () => ({
   createLesson: vi.fn(),
   uploadAudio: vi.fn(),
 }))
-vi.mock('@/api/cards', () => ({ countDueCards: () => countDueCards() }))
+vi.mock('@/api/cards', () => ({ deckStats: () => deckStats() }))
 vi.mock('@/api/entries', () => ({ listRecurringCorrections: () => listRecurringCorrections() }))
 vi.mock('@/api/tutors', () => ({
   listTutors: () => listTutors(),
@@ -66,7 +66,7 @@ describe('LessonsPage', () => {
   beforeEach(() => {
     listLessons.mockReset().mockResolvedValue([])
     listTutors.mockReset().mockResolvedValue([])
-    countDueCards.mockReset().mockResolvedValue(0)
+    deckStats.mockReset().mockResolvedValue({ due: 0, new: 0, total: 0 })
     listRecurringCorrections.mockReset().mockResolvedValue([])
   })
 
@@ -110,7 +110,7 @@ describe('LessonsPage', () => {
   })
 
   it('shows due cards and the recurring correction in the summary line', async () => {
-    countDueCards.mockResolvedValue(3)
+    deckStats.mockResolvedValue({ due: 3, new: 1, total: 20 })
     listRecurringCorrections.mockResolvedValue([{ original: 'poszłem', corrected: 'poszedłem', lessonCount: 3 }])
     renderPage()
     const summary = await screen.findByTestId('summary')
@@ -120,7 +120,7 @@ describe('LessonsPage', () => {
   })
 
   it('shows only the due cards when nothing recurs', async () => {
-    countDueCards.mockResolvedValue(1)
+    deckStats.mockResolvedValue({ due: 1, new: 0, total: 5 })
     renderPage()
     expect(await screen.findByTestId('summary')).toHaveTextContent(/^К повторению сегодня — 1 карточка\.$/)
   })

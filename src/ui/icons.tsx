@@ -32,6 +32,14 @@ export function UploadIcon(props: IconProps) {
   )
 }
 
+export function PlusIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </Icon>
+  )
+}
+
 export function ChevronRightIcon(props: IconProps) {
   return (
     <Icon {...props}>
@@ -77,6 +85,15 @@ export function ReviewIcon(props: IconProps) {
   return (
     <Icon {...props}>
       <rect x="3" y="6" width="14" height="15" rx="2" />
+      <path d="M7 3h12a2 2 0 0 1 2 2v13" />
+    </Icon>
+  )
+}
+
+export function ReviewFilledIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="6" width="14" height="15" rx="2" fill="currentColor" />
       <path d="M7 3h12a2 2 0 0 1 2 2v13" />
     </Icon>
   )

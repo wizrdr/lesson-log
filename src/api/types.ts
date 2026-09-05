@@ -26,7 +26,7 @@ export interface Lesson {
 
 export interface Entry {
   id: string
-  lesson_id: string
+  lesson_id: string | null
   user_id: string
   type: EntryType
   original: string

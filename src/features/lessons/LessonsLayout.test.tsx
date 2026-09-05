@@ -14,7 +14,7 @@ vi.mock('@/api/lessons', () => ({
   createLesson: vi.fn(),
   uploadAudio: vi.fn(),
 }))
-vi.mock('@/api/cards', () => ({ countDueCards: () => Promise.resolve(0) }))
+vi.mock('@/api/cards', () => ({ deckStats: () => Promise.resolve({ due: 0, new: 0, total: 0 }) }))
 vi.mock('@/api/entries', () => ({
   listRecurringCorrections: () => Promise.resolve([]),
   listEntriesByLesson: () => Promise.resolve([]),

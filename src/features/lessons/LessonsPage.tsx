@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { countDueCards } from '@/api/cards'
+import { deckStats } from '@/api/cards'
 import { listRecurringCorrections, type RecurringCorrection } from '@/api/entries'
 import { listLessons, subscribeLessons, type LessonListItem } from '@/api/lessons'
 import { listTutors } from '@/api/tutors'
@@ -35,7 +35,9 @@ export function LessonsPage({ embedded = false, selectedId }: LessonsPageProps) 
         setError(null)
       })
       .catch(setError)
-    countDueCards().then(setDueCards).catch(setError)
+    deckStats()
+      .then((s) => setDueCards(s.due))
+      .catch(setError)
     listRecurringCorrections()
       .then((list) => setRecurring(list[0] ?? null))
       .catch(setError)

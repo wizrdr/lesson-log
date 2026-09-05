@@ -1,11 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import type { LessonEntry } from '@/api/entries'
 import type { LessonWithTutor } from '@/api/lessons'
-import type { Entry } from '@/api/types'
 
 const getLesson = vi.fn()
 const requestTranscription = vi.fn()
 const listEntriesByLesson = vi.fn()
+const addToDeck = vi.fn()
+const removeFromDeck = vi.fn()
 let emit: ((lesson: Partial<LessonWithTutor> & { id: string }) => void) | null = null
 
 vi.mock('@/api/lessons', () => ({
@@ -19,6 +21,10 @@ vi.mock('@/api/lessons', () => ({
   },
 }))
 vi.mock('@/api/entries', () => ({ listEntriesByLesson: (id: string) => listEntriesByLesson(id) }))
+vi.mock('@/api/cards', () => ({
+  addToDeck: (...args: unknown[]) => addToDeck(...args),
+  removeFromDeck: (...args: unknown[]) => removeFromDeck(...args),
+}))
 
 import { LessonPage } from './LessonPage'
 
@@ -39,7 +45,10 @@ function lesson(over: Partial<LessonWithTutor>): LessonWithTutor {
   return { ...base, ...over }
 }
 
-function entry(over: Partial<Entry> & Pick<Entry, 'id' | 'type' | 'original'>): Entry {
+const DUE = { due: '2026-09-05T08:00:00Z' }
+const LATER = { due: '2999-01-01T00:00:00Z' }
+
+function entry(over: Partial<LessonEntry> & Pick<LessonEntry, 'id' | 'type' | 'original'>): LessonEntry {
   return {
     lesson_id: 'l1',
     user_id: 'u1',
@@ -48,6 +57,7 @@ function entry(over: Partial<Entry> & Pick<Entry, 'id' | 'type' | 'original'>): 
     quote: null,
     created_at: '2026-09-05T10:05:00Z',
     deleted_at: null,
+    card: DUE,
     ...over,
   }
 }
@@ -66,6 +76,8 @@ describe('LessonPage', () => {
     getLesson.mockReset()
     requestTranscription.mockReset().mockResolvedValue(undefined)
     listEntriesByLesson.mockReset().mockResolvedValue([])
+    addToDeck.mockReset().mockResolvedValue(undefined)
+    removeFromDeck.mockReset().mockResolvedValue(undefined)
   })
 
   it('groups entries by type: corrections, vocab, rules', async () => {
@@ -74,7 +86,7 @@ describe('LessonPage', () => {
       entry({ id: 'e1', type: 'vocab', original: 'zeszyt', corrected: 'тетрадь' }),
       entry({ id: 'e2', type: 'correction', original: 'ja jest', corrected: 'ja jestem', explanation: 'спряжение być', quote: 'ja jest… ja jestem' }),
       entry({ id: 'e3', type: 'rule', original: 'После liczebniki 5+ — dopełniacz' }),
-      entry({ id: 'e4', type: 'correction', original: 'dwa kobiety', corrected: 'dwie kobiety' }),
+      entry({ id: 'e4', type: 'correction', original: 'dwa kobiety', corrected: 'dwie kobiety', card: LATER }),
     ])
     renderPage()
 
@@ -92,7 +104,7 @@ describe('LessonPage', () => {
     expect(corrections).toHaveTextContent('ja jest… ja jestem')
     expect(corrections).not.toHaveTextContent('zeszyt')
 
-    expect(screen.getByRole('button', { name: 'Повторить 4 карточки' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Повторить 3 карточки' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Уроки' })).toHaveAttribute('href', '/')
     expect(screen.getByText('Транскрипт')).toBeInTheDocument()
     expect(screen.getByText('Dzień dobry, jak się masz?')).toBeInTheDocument()
@@ -122,6 +134,29 @@ describe('LessonPage', () => {
     expect(await screen.findByText('zeszyt')).toBeInTheDocument()
     expect(screen.queryByText('Разбор записи, обычно 2–5 минут')).toBeNull()
     expect(screen.getByText('Анна · польский · 1 запись')).toBeInTheDocument()
+  })
+
+  it('says everything is reviewed when no card of the lesson is due, and toggles deck membership per entry', async () => {
+    getLesson.mockResolvedValue(lesson({}))
+    listEntriesByLesson.mockResolvedValue([
+      entry({ id: 'e1', type: 'vocab', original: 'zeszyt', card: LATER }),
+      entry({ id: 'e2', type: 'rule', original: 'reguła', card: null }),
+    ])
+    renderPage()
+
+    expect(await screen.findByText('Все карточки урока повторены')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Повторить/ })).toBeNull()
+
+    const inDeck = screen.getByRole('button', { name: 'Убрать из колоды', pressed: true })
+    const outOfDeck = screen.getByRole('button', { name: 'В колоду', pressed: false })
+    fireEvent.click(outOfDeck)
+    expect(addToDeck).toHaveBeenCalledWith('e2')
+    await waitFor(() => expect(outOfDeck).toHaveAttribute('aria-pressed', 'true'))
+    expect(screen.getByRole('button', { name: 'Повторить 1 карточка' })).toBeInTheDocument()
+
+    fireEvent.click(inDeck)
+    expect(removeFromDeck).toHaveBeenCalledWith('e1')
+    await waitFor(() => expect(inDeck).toHaveAttribute('aria-pressed', 'false'))
   })
 
   it('stacks long originals on two lines instead of inline', async () => {

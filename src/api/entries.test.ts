@@ -1,19 +1,33 @@
-const order = vi.fn()
+import { createSupabaseMock } from '@/test/supabaseMock'
 
-vi.mock('@/lib/supabase', () => {
-  const chain = {
-    select: () => chain,
-    eq: () => chain,
-    is: () => chain,
-    not: () => chain,
-    order: (...args: unknown[]) => order(...args),
-  }
-  return { supabase: { from: () => chain }, supabaseConfigured: true }
+const mock = vi.hoisted(() => ({ current: null as ReturnType<typeof import('@/test/supabaseMock').createSupabaseMock> | null }))
+
+vi.mock('@/lib/supabase', () => ({
+  get supabase() {
+    return mock.current!.supabase
+  },
+  supabaseConfigured: true,
+}))
+
+import { createManualEntry, groupRecurringCorrections, listEntries, listEntriesByLesson, listRecurringCorrections, softDeleteEntry, updateEntry } from './entries'
+
+beforeEach(() => {
+  mock.current = createSupabaseMock()
 })
 
-import { groupRecurringCorrections, listRecurringCorrections } from './entries'
+const state = () => mock.current!.state
 
-const row = (lesson_id: string, original: string, corrected: string | null) => ({ lesson_id, original, corrected })
+const row = (lesson_id: string | null, original: string, corrected: string | null) => ({ lesson_id, original, corrected })
+
+const base = {
+  user_id: 'u1',
+  type: 'vocab' as const,
+  corrected: null,
+  explanation: null,
+  quote: null,
+  created_at: '2026-09-05T10:00:00Z',
+  deleted_at: null,
+}
 
 describe('groupRecurringCorrections', () => {
   it('groups by corrected text ignoring case and whitespace, keeps the most recent original', () => {
@@ -25,11 +39,12 @@ describe('groupRecurringCorrections', () => {
     expect(result).toEqual([{ original: 'poszłem', corrected: 'Poszedłem', lessonCount: 3 }])
   })
 
-  it('needs at least two distinct lessons: repeats inside one lesson do not count', () => {
+  it('needs at least two distinct lessons: repeats inside one lesson and manual entries do not count', () => {
     expect(
       groupRecurringCorrections([
         row('l1', 'w Warszawa', 'w Warszawie'),
         row('l1', 'w Warszawa', 'w Warszawie'),
+        row(null, 'w Warszawa', 'w Warszawie'),
         row('l2', 'dwa kobiety', 'dwie kobiety'),
       ]),
     ).toEqual([])
@@ -54,13 +69,115 @@ describe('groupRecurringCorrections', () => {
 
 describe('listRecurringCorrections', () => {
   it('queries corrections once and groups the rows', async () => {
-    order.mockResolvedValue({ data: [row('l1', 'poszłem', 'poszedłem'), row('l2', 'poszlem', 'poszedłem')], error: null })
+    state().results.push({ data: [row('l1', 'poszłem', 'poszedłem'), row('l2', 'poszlem', 'poszedłem')] })
     await expect(listRecurringCorrections()).resolves.toEqual([{ original: 'poszłem', corrected: 'poszedłem', lessonCount: 2 }])
-    expect(order).toHaveBeenCalledTimes(1)
+    expect(state().calls).toHaveLength(1)
   })
 
   it('surfaces query errors', async () => {
-    order.mockResolvedValue({ data: null, error: { message: 'permission denied' } })
+    state().results.push({ data: null, error: { message: 'permission denied' } })
     await expect(listRecurringCorrections()).rejects.toMatchObject({ code: 'loadCorrections', detail: 'permission denied' })
+  })
+})
+
+describe('listEntriesByLesson', () => {
+  it('joins the card and normalizes it to an object or null', async () => {
+    state().results.push({
+      data: [
+        { ...base, id: 'e1', lesson_id: 'l1', original: 'a', card: [{ due: '2026-09-01T00:00:00Z' }] },
+        { ...base, id: 'e2', lesson_id: 'l1', original: 'b', card: null },
+      ],
+    })
+    const entries = await listEntriesByLesson('l1')
+    expect(entries.map((e) => e.card)).toEqual([{ due: '2026-09-01T00:00:00Z' }, null])
+    const ops = state().ops(0)
+    expect(ops.eq).toEqual(['lesson_id', 'l1'])
+    expect(ops.is).toEqual(['deleted_at', null])
+  })
+})
+
+describe('listEntries', () => {
+  it('loads non-deleted entries with the inDeck flag and lesson meta', async () => {
+    state().results.push({
+      data: [
+        { ...base, id: 'e1', lesson_id: 'l1', original: 'zeszyt', card: { entry_id: 'e1' }, lesson: { id: 'l1', date: '2026-09-05', tutor: [{ name: 'Анна', language: 'pl' }] } },
+        { ...base, id: 'e2', lesson_id: null, original: 'manual', card: null, lesson: null },
+      ],
+    })
+    const entries = await listEntries()
+    expect(entries).toEqual([
+      expect.objectContaining({ id: 'e1', inDeck: true, lesson: { id: 'l1', date: '2026-09-05', tutor: { name: 'Анна', language: 'pl' } } }),
+      expect.objectContaining({ id: 'e2', inDeck: false, lesson: null }),
+    ])
+    const ops = state().ops(0)
+    expect(String(ops.select[0])).toContain('lesson:lessons(')
+    expect(ops.is).toEqual(['deleted_at', null])
+    expect(ops.eq).toBeUndefined()
+    expect(ops.or).toBeUndefined()
+    expect(ops.order).toEqual(['created_at', { ascending: false }])
+  })
+
+  it('applies the type filter', async () => {
+    state().results.push({ data: [] })
+    await listEntries({ type: 'vocab' })
+    expect(state().ops(0).eq).toEqual(['type', 'vocab'])
+  })
+
+  it('searches original and corrected with a quoted ilike pattern', async () => {
+    state().results.push({ data: [] })
+    await listEntries({ search: ' po"sz ' })
+    expect(state().ops(0).or).toEqual(['original.ilike."%po\\"sz%",corrected.ilike."%po\\"sz%"'])
+  })
+
+  it('filters by tutor through an inner join on lessons', async () => {
+    state().results.push({ data: [] })
+    await listEntries({ tutorId: 't1' })
+    const ops = state().ops(0)
+    expect(String(ops.select[0])).toContain('lesson:lessons!inner(')
+    expect(ops.eq).toEqual(['lesson.tutor_id', 't1'])
+  })
+
+  it('surfaces errors as loadEntries', async () => {
+    state().results.push({ data: null, error: { message: 'boom' } })
+    await expect(listEntries()).rejects.toMatchObject({ code: 'loadEntries', detail: 'boom' })
+  })
+})
+
+describe('createManualEntry', () => {
+  it('inserts the entry without a lesson and a card row right after', async () => {
+    const created = { ...base, id: 'e9', lesson_id: null, original: 'kot', corrected: 'кот' }
+    state().results.push({ data: created }, { error: null })
+    const entry = await createManualEntry({ type: 'vocab', original: ' kot ', corrected: ' кот ', explanation: '  ' })
+    expect(entry).toEqual({ ...created, inDeck: true, lesson: null })
+
+    expect(state().calls.map((c) => c.table)).toEqual(['entries', 'cards'])
+    expect(state().ops(0).insert).toEqual([{ type: 'vocab', original: 'kot', corrected: 'кот', explanation: null, lesson_id: null }])
+    expect(state().ops(1).insert).toEqual([{ entry_id: 'e9' }])
+  })
+
+  it('does not create a card when the entry insert fails', async () => {
+    state().results.push({ data: null, error: { message: 'check violation' } })
+    await expect(createManualEntry({ type: 'rule', original: 'x', corrected: null, explanation: null })).rejects.toMatchObject({ code: 'saveEntry' })
+    expect(state().calls).toHaveLength(1)
+  })
+})
+
+describe('updateEntry / softDeleteEntry', () => {
+  it('updateEntry patches the trimmed fields by id', async () => {
+    const updated = { ...base, id: 'e1', lesson_id: 'l1', original: 'a', corrected: 'b' }
+    state().results.push({ data: updated })
+    await expect(updateEntry('e1', { type: 'correction', original: 'a ', corrected: 'b', explanation: '' })).resolves.toEqual(updated)
+    const ops = state().ops(0)
+    expect(ops.update).toEqual([{ type: 'correction', original: 'a', corrected: 'b', explanation: null }])
+    expect(ops.eq).toEqual(['id', 'e1'])
+  })
+
+  it('softDeleteEntry removes the card and stamps deleted_at', async () => {
+    state().results.push({ error: null }, { error: null })
+    await softDeleteEntry('e1')
+    expect(state().calls.map((c) => c.table)).toEqual(['cards', 'entries'])
+    const update = state().ops(1).update[0] as { deleted_at: string }
+    expect(typeof update.deleted_at).toBe('string')
+    expect(state().ops(1).eq).toEqual(['id', 'e1'])
   })
 })
