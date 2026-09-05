@@ -121,8 +121,4 @@
   button {
     touch-action: manipulation;
   }
-
-  body.sheet-open {
-    overflow: hidden;
-  }
 }

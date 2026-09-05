@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import type { LessonListItem, LessonWithTutor } from '@/api/lessons'
 import { mockMatchMedia, type MatchMediaMock } from '@/test/matchMedia'
@@ -94,11 +94,60 @@ describe('LessonsLayout', () => {
     expect(getLesson).not.toHaveBeenCalled()
   })
 
-  it('tablet: "/lessons/:id" shows only the lesson with a back link', async () => {
+  it('tablet: "/lessons/:id" shows only the lesson without a back link (side nav is there)', async () => {
     mm = renderAt(834, '/lessons/l1')
     expect(await screen.findByRole('heading', { name: '5 сентября' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Уроки' })).toHaveAttribute('href', '/')
+    expect(screen.queryByRole('link', { name: 'Уроки' })).toBeNull()
     expect(screen.queryByRole('heading', { name: 'Уроки' })).toBeNull()
     expect(listLessons).not.toHaveBeenCalled()
+  })
+
+  it('phone: "/lessons/:id" shows the back link', async () => {
+    mm = renderAt(390, '/lessons/l1')
+    expect(await screen.findByRole('heading', { name: '5 сентября' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Уроки' })).toHaveAttribute('href', '/')
+  })
+
+  it('two panels start at 1200, not at 1024', async () => {
+    mm = renderAt(1199, '/lessons/l1')
+    expect(await screen.findByRole('heading', { name: '5 сентября' })).toBeInTheDocument()
+    expect(screen.queryByTestId('lessons-list')).toBeNull()
+    act(() => mm!.set(1200))
+    expect(await screen.findByRole('heading', { name: 'Уроки' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '5 сентября' })).toBeInTheDocument()
+  })
+
+  it('desktop: list and lesson scroll independently', async () => {
+    mm = renderAt(1440, '/lessons/l1')
+    await screen.findByRole('heading', { name: '5 сентября' })
+    expect(screen.getByTestId('lessons-list')).toHaveClass('overflow-y-auto')
+    expect(screen.getByTestId('lesson-panel')).toHaveClass('overflow-y-auto')
+    act(() => mm!.set(834))
+    expect(screen.getByTestId('lesson-panel')).not.toHaveClass('overflow-y-auto')
+  })
+
+  it('crossing the desktop threshold keeps the lesson mounted and does not refetch it', async () => {
+    mm = renderAt(1100, '/lessons/l1')
+    const heading = await screen.findByRole('heading', { name: '5 сентября' })
+    expect(getLesson).toHaveBeenCalledTimes(1)
+
+    act(() => mm!.set(1440))
+    expect(await screen.findByRole('heading', { name: 'Уроки' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '5 сентября' })).toBe(heading)
+    expect(listLessons).toHaveBeenCalledTimes(1)
+
+    act(() => mm!.set(1100))
+    expect(screen.queryByTestId('lessons-list')).toBeNull()
+    expect(screen.getByRole('heading', { name: '5 сентября' })).toBe(heading)
+    expect(getLesson).toHaveBeenCalledTimes(1)
+  })
+
+  it('crossing the desktop threshold on "/" keeps the list mounted', async () => {
+    mm = renderAt(390, '/')
+    const heading = await screen.findByRole('heading', { name: 'Уроки' })
+    act(() => mm!.set(1440))
+    expect(screen.getByRole('heading', { name: 'Уроки' })).toBe(heading)
+    expect(screen.getByText('Выбери урок слева')).toBeInTheDocument()
+    expect(listLessons).toHaveBeenCalledTimes(1)
   })
 })

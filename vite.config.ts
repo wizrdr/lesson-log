@@ -18,6 +18,7 @@ export default defineConfig({
       filename: 'sw.ts',
       injectManifest: { globPatterns: ['**/*.{js,css,html,svg,png,woff2}'] },
       manifest: {
+        lang: 'ru',
         name: 'Lesson Log',
         short_name: 'Lesson Log',
         description: 'Журнал ошибок и повторение после уроков с репетитором',

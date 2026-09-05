@@ -78,7 +78,7 @@ export function ReviewPage() {
   })
 
   return (
-    <Page title={t('tabs.review')} className="lg:ml-auto lg:mr-auto">
+    <Page title={t('tabs.review')}>
       {stats && (
         <dl className="m-0 flex gap-6 px-6 pt-6" data-testid="deck-stats">
           <Stat label={t('review.due')} value={stats.due} />
@@ -92,10 +92,10 @@ export function ReviewPage() {
       {queue === null && loadError === null && <div className="h-24" aria-busy />}
 
       {queue && !current && (
-        <p className="px-6 pt-12 font-serif text-lg leading-6 italic text-muted">
-          {t('review.done')}
-          {reviewed > 0 && <> {t('review.session', { cards: t.plural('cards', reviewed) })}</>}
-        </p>
+        <div className="px-6 pt-12 font-serif text-lg leading-6 italic text-muted">
+          <p>{t('review.done')}</p>
+          {reviewed > 0 && <p>{t('review.session', { cards: t.plural('cards', reviewed) })}</p>}
+        </div>
       )}
 
       {current && (

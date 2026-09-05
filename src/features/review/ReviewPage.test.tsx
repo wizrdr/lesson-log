@@ -92,7 +92,8 @@ describe('ReviewPage', () => {
     expect(screen.getByTestId('card-back')).toHaveTextContent('Моя карточка')
     fireEvent.click(screen.getByRole('button', { name: 'Легко' }))
     expect(reviewCard).toHaveBeenCalledWith(vocab, 4)
-    expect(screen.getByText(/На сегодня всё/)).toHaveTextContent('На сегодня всё Повторено за сессию — 2 карточки.')
+    expect(screen.getByText('На сегодня всё.')).toBeInTheDocument()
+    expect(screen.getByText('Повторено за сессию — 2 карточки.')).toBeInTheDocument()
     expect(screen.getByTestId('deck-stats')).toHaveTextContent('К повторению0Новых0В колоде7')
   })
 
@@ -100,7 +101,7 @@ describe('ReviewPage', () => {
     listDueCards.mockResolvedValue([])
     deckStats.mockResolvedValue({ due: 0, new: 0, total: 3 })
     renderPage()
-    expect(await screen.findByText('На сегодня всё')).toBeInTheDocument()
+    expect(await screen.findByText('На сегодня всё.')).toBeInTheDocument()
     expect(screen.queryByText(/Повторено за сессию/)).toBeNull()
   })
 
@@ -137,6 +138,6 @@ describe('ReviewPage', () => {
     listDueCards.mockRejectedValue(new ApiError('loadCards', 'offline'))
     renderPage()
     expect(await screen.findByText('Не удалось загрузить карточки: offline')).toBeInTheDocument()
-    await waitFor(() => expect(screen.queryByText('На сегодня всё')).toBeNull())
+    await waitFor(() => expect(screen.queryByText('На сегодня всё.')).toBeNull())
   })
 })

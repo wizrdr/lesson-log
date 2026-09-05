@@ -5,8 +5,10 @@ import { listRecurringCorrections, type RecurringCorrection } from '@/api/entrie
 import { listLessons, subscribeLessons, type LessonListItem } from '@/api/lessons'
 import { listTutors } from '@/api/tutors'
 import type { Tutor } from '@/api/types'
+import { MQ_TABLET } from '@/app/breakpoints'
 import { Page } from '@/app/Page'
 import { useErrorText, useLocale, useT } from '@/i18n'
+import { useMediaQuery } from '@/lib/useMediaQuery'
 import { Button, ChevronRightIcon, cn, GlobeIcon, HairlineList, IconButton, UploadIcon } from '@/ui'
 import { formatEntryBreakdown, formatLessonDate } from './format'
 import { StatusLine } from './StatusLine'
@@ -21,6 +23,7 @@ export function LessonsPage({ embedded = false, selectedId }: LessonsPageProps) 
   const t = useT()
   const { lang, setLang } = useLocale()
   const errorText = useErrorText()
+  const sideNav = useMediaQuery(MQ_TABLET)
   const [lessons, setLessons] = useState<LessonListItem[] | null>(null)
   const [tutors, setTutors] = useState<Tutor[]>([])
   const [dueCards, setDueCards] = useState(0)
@@ -54,10 +57,10 @@ export function LessonsPage({ embedded = false, selectedId }: LessonsPageProps) 
   return (
     <Page
       title={t('lessons.title')}
-      className={embedded ? 'lg:ml-0 lg:max-w-none' : undefined}
+      width={embedded ? 'list' : 'page'}
       action={
         <div className="flex items-center gap-1">
-          {!embedded && (
+          {!sideNav && (
             <IconButton label={t('lang.other')} onClick={() => setLang(lang === 'ru' ? 'en' : 'ru')}>
               <GlobeIcon />
             </IconButton>
@@ -103,7 +106,7 @@ export function LessonsPage({ embedded = false, selectedId }: LessonsPageProps) 
                 to={`/lessons/${lesson.id}`}
                 aria-current={lesson.id === selectedId ? 'page' : undefined}
                 className={cn(
-                  'relative grid grid-cols-[88px_minmax(0,1fr)_20px] items-start gap-x-2 px-6 py-3 transition-colors duration-fast hover:bg-surface-raised focus-ring-inset',
+                  'relative grid grid-cols-[88px_minmax(0,1fr)_20px] items-start gap-x-2 px-6 py-3 transition-colors duration-fast hover:bg-surface-raised focus-ring-inset [-webkit-touch-callout:none]',
                   lesson.id === selectedId && 'bg-surface-raised before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-ink',
                 )}
               >

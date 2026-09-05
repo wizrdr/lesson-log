@@ -21,7 +21,6 @@ describe('Sheet', () => {
     expect(screen.getByRole('dialog', { name: 'Заголовок' })).toBeInTheDocument()
     expect(screen.getByText('Содержимое')).toBeInTheDocument()
     expect(screen.getByText('Готово')).toBeInTheDocument()
-    expect(document.body).toHaveClass('sheet-open')
   })
 
   it('calls onClose on backdrop click', () => {

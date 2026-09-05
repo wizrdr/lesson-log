@@ -3,7 +3,7 @@ import { useLocale, useT, type TextKey } from '@/i18n'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { cn, BeforeLessonIcon, GlobeIcon, JournalIcon, LessonsIcon, ReviewIcon, type IconProps } from '@/ui'
 import type { ComponentType } from 'react'
-import { MQ_DESKTOP, MQ_TABLET } from './breakpoints'
+import { MQ_LAPTOP, MQ_TABLET } from './breakpoints'
 
 const tabs: { to: string; label: TextKey; Icon: ComponentType<IconProps> }[] = [
   { to: '/', label: 'tabs.lessons', Icon: LessonsIcon },
@@ -14,10 +14,10 @@ const tabs: { to: string; label: TextKey; Icon: ComponentType<IconProps> }[] = [
 
 export function Shell() {
   const tablet = useMediaQuery(MQ_TABLET)
-  const desktop = useMediaQuery(MQ_DESKTOP)
+  const labels = useMediaQuery(MQ_LAPTOP)
   return (
     <div className={cn('flex h-dvh bg-bg pt-[env(safe-area-inset-top)] text-text', tablet ? 'flex-row' : 'flex-col')}>
-      {tablet && <SideNav labels={desktop} />}
+      {tablet && <SideNav labels={labels} />}
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="paper flex min-h-full flex-col">
           <Outlet />
@@ -64,16 +64,19 @@ function SideNav({ labels }: { labels: boolean }) {
           </li>
         ))}
       </ul>
-      {labels && (
-        <button
-          type="button"
-          onClick={() => setLang(lang === 'ru' ? 'en' : 'ru')}
-          className="mt-auto mb-[max(env(safe-area-inset-bottom),12px)] flex h-11 items-center gap-3 px-5 text-[15px] font-medium text-muted transition-colors duration-fast hover:bg-surface-raised hover:text-text focus-ring-inset"
-        >
-          <GlobeIcon />
-          <span>{t('lang.other')}</span>
-        </button>
-      )}
+      <button
+        type="button"
+        aria-label={t('lang.other')}
+        title={labels ? undefined : t('lang.other')}
+        onClick={() => setLang(lang === 'ru' ? 'en' : 'ru')}
+        className={cn(
+          'mt-auto mb-[max(env(safe-area-inset-bottom),12px)] flex h-11 items-center gap-3 text-[15px] font-medium text-muted transition-colors duration-fast hover:bg-surface-raised hover:text-text focus-ring-inset',
+          labels ? 'px-5' : 'justify-center',
+        )}
+      >
+        <GlobeIcon />
+        {labels && <span>{t('lang.other')}</span>}
+      </button>
     </nav>
   )
 }

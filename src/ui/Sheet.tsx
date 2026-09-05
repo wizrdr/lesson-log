@@ -65,7 +65,6 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
     const panel = panelRef.current
     if (!panel) return
     const previous = document.activeElement as HTMLElement | null
-    document.body.classList.add('sheet-open')
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation()
@@ -100,7 +99,6 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
     }
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.classList.remove('sheet-open')
       previous?.focus?.()
       if (navigator.maxTouchPoints > 0 && window.scrollY > 0) window.scrollTo(0, 0)
     }

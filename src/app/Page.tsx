@@ -2,21 +2,31 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeftIcon, cn } from '@/ui'
 
+export type PageWidth = 'page' | 'list' | 'lesson'
+
+const WIDTH: Record<PageWidth, string | null> = {
+  page: 'mx-auto max-w-lg md:max-w-[640px]',
+  list: null,
+  lesson: 'max-w-[720px]',
+}
+
 export interface PageProps {
   title: string
   subtitle?: ReactNode
   action?: ReactNode
   back?: { to: string; label: string }
   footer?: ReactNode
+  width?: PageWidth
   className?: string
   children: ReactNode
 }
 
-export function Page({ title, subtitle, action, back, footer, className, children }: PageProps) {
+export function Page({ title, subtitle, action, back, footer, width = 'page', className, children }: PageProps) {
   return (
     <div
       className={cn(
-        'mx-auto flex w-full max-w-lg flex-1 flex-col md:ml-8 md:mr-0 md:max-w-[640px]',
+        'flex w-full flex-1 flex-col',
+        WIDTH[width],
         footer ? null : 'pb-12',
         className,
       )}

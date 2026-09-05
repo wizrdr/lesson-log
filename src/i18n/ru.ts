@@ -120,7 +120,7 @@ export const ru = {
   'review.hard': 'Трудно',
   'review.good': 'Хорошо',
   'review.easy': 'Легко',
-  'review.done': 'На сегодня всё',
+  'review.done': 'На сегодня всё.',
   'review.session': 'Повторено за сессию — {cards}.',
   'review.manual': 'Моя карточка',
 

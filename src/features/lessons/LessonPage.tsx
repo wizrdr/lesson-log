@@ -3,9 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { listEntriesByLesson, type LessonEntry } from '@/api/entries'
 import { getLesson, requestTranscription, subscribeLessons, type LessonWithTutor } from '@/api/lessons'
 import type { EntryType } from '@/api/types'
+import { MQ_TABLET } from '@/app/breakpoints'
 import { Page } from '@/app/Page'
 import { DeckToggle } from '@/features/review/DeckToggle'
 import { useErrorText, useLocale, useT, type TextKey } from '@/i18n'
+import { useMediaQuery } from '@/lib/useMediaQuery'
 import { Button, HairlineBlock, HairlineList, ReviewIcon } from '@/ui'
 import { formatLessonDate } from './format'
 import { StatusLine } from './StatusLine'
@@ -28,6 +30,7 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
   const t = useT()
   const { lang } = useLocale()
   const errorText = useErrorText()
+  const sideNav = useMediaQuery(MQ_TABLET)
   const [lesson, setLesson] = useState<LessonWithTutor | null>(null)
   const [entries, setEntries] = useState<LessonEntry[]>([])
   const [loadError, setLoadError] = useState<unknown>(null)
@@ -66,12 +69,12 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
     setEntries((list) => list.map((e) => (e.id === id ? { ...e, card: inDeck ? { due: new Date().toISOString() } : null } : e)))
   }
 
-  const back = embedded ? undefined : { to: '/', label: t('tabs.lessons') }
-  const column = embedded ? 'lg:ml-0 lg:max-w-[720px]' : undefined
+  const back = sideNav ? undefined : { to: '/', label: t('tabs.lessons') }
+  const width = embedded ? 'lesson' : 'page'
 
   if (loadError !== null && !lesson) {
     return (
-      <Page title={t('lesson.title')} back={back} className={column}>
+      <Page title={t('lesson.title')} back={back} width={width}>
         <p className="px-6 pt-6 text-[13px] text-pen-red">{errorText(loadError)}</p>
       </Page>
     )
@@ -102,7 +105,7 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
       title={formatLessonDate(lesson.date, lang)}
       subtitle={ready ? `${tutorLine} · ${t.plural('entries', entries.length)}` : tutorLine}
       back={back}
-      className={column}
+      width={width}
       footer={
         ready && entries.length > 0 ? (
           dueCount > 0 ? (

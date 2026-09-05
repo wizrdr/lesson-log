@@ -120,7 +120,7 @@ export const en: Dictionary = {
   'review.hard': 'Hard',
   'review.good': 'Good',
   'review.easy': 'Easy',
-  'review.done': 'Done for today',
+  'review.done': 'Done for today.',
   'review.session': 'Reviewed this session — {cards}.',
   'review.manual': 'My card',
 

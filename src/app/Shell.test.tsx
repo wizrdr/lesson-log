@@ -38,7 +38,7 @@ describe('Shell', () => {
     expect(screen.queryByText('Lesson Log')).toBeNull()
   })
 
-  it('renders an icon-only side nav with aria-labels and titles on a tablet', () => {
+  it('renders an icon-only side nav with aria-labels, titles and the language globe on a tablet', () => {
     ;({ mm } = renderShell(834))
     const nav = screen.getByTestId('side-nav')
     expect(screen.queryByTestId('tab-bar')).toBeNull()
@@ -48,11 +48,16 @@ describe('Shell', () => {
       expect(link).toHaveTextContent('')
     }
     expect(within(nav).queryByText('Lesson Log')).toBeNull()
-    expect(within(nav).queryByRole('button')).toBeNull()
+    const globe = within(nav).getByRole('button', { name: 'English' })
+    expect(globe).toHaveAttribute('title', 'English')
+    expect(globe).toHaveTextContent('')
+    fireEvent.click(globe)
+    expect(within(nav).getByRole('link', { name: 'Journal' })).toBeInTheDocument()
+    expect(within(nav).getByRole('button', { name: 'Русский' })).toBeInTheDocument()
   })
 
-  it('renders the side nav with logo, labels and the language switch on a desktop', () => {
-    ;({ mm } = renderShell(1440))
+  it('renders the side nav with logo, labels and the language switch from 1024', () => {
+    ;({ mm } = renderShell(1024))
     const nav = screen.getByTestId('side-nav')
     expect(screen.queryByTestId('tab-bar')).toBeNull()
     expect(within(nav).getByText('Lesson Log')).toBeInTheDocument()
