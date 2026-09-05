@@ -8,7 +8,7 @@ export async function listEntriesByLesson(lessonId: string): Promise<Entry[]> {
     .eq('lesson_id', lessonId)
     .is('deleted_at', null)
     .order('created_at')
-  return unwrap<Entry[]>(result, 'Не удалось загрузить записи')
+  return unwrap<Entry[]>(result, 'loadEntries')
 }
 
 export type CorrectionRow = Pick<Entry, 'lesson_id' | 'original' | 'corrected'>
@@ -43,5 +43,5 @@ export async function listRecurringCorrections(): Promise<RecurringCorrection[]>
     .is('deleted_at', null)
     .not('corrected', 'is', null)
     .order('created_at', { ascending: false })
-  return groupRecurringCorrections(unwrap<CorrectionRow[]>(result, 'Не удалось загрузить исправления'))
+  return groupRecurringCorrections(unwrap<CorrectionRow[]>(result, 'loadCorrections'))
 }

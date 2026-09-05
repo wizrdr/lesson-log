@@ -1,15 +1,17 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useT, type TextKey } from '@/i18n'
 import { cn, BeforeLessonIcon, JournalIcon, LessonsIcon, ReviewIcon, type IconProps } from '@/ui'
 import type { ComponentType } from 'react'
 
-const tabs: { to: string; label: string; Icon: ComponentType<IconProps> }[] = [
-  { to: '/', label: 'Уроки', Icon: LessonsIcon },
-  { to: '/journal', label: 'Журнал', Icon: JournalIcon },
-  { to: '/review', label: 'Повторение', Icon: ReviewIcon },
-  { to: '/before-lesson', label: 'Перед уроком', Icon: BeforeLessonIcon },
+const tabs: { to: string; label: TextKey; Icon: ComponentType<IconProps> }[] = [
+  { to: '/', label: 'tabs.lessons', Icon: LessonsIcon },
+  { to: '/journal', label: 'tabs.journal', Icon: JournalIcon },
+  { to: '/review', label: 'tabs.review', Icon: ReviewIcon },
+  { to: '/before-lesson', label: 'tabs.beforeLesson', Icon: BeforeLessonIcon },
 ]
 
 export function Shell() {
+  const t = useT()
   return (
     <div className="flex h-dvh flex-col bg-bg text-text">
       <main className="min-h-0 flex-1 overflow-y-auto">
@@ -32,7 +34,7 @@ export function Shell() {
             }
           >
             <Icon />
-            <span>{label}</span>
+            <span>{t(label)}</span>
           </NavLink>
         ))}
       </nav>

@@ -61,6 +61,6 @@ describe('listRecurringCorrections', () => {
 
   it('surfaces query errors', async () => {
     order.mockResolvedValue({ data: null, error: { message: 'permission denied' } })
-    await expect(listRecurringCorrections()).rejects.toThrow('Не удалось загрузить исправления: permission denied')
+    await expect(listRecurringCorrections()).rejects.toMatchObject({ code: 'loadCorrections', detail: 'permission denied' })
   })
 })

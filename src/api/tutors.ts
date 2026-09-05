@@ -9,7 +9,7 @@ export interface CreateTutorInput {
 
 export async function listTutors(): Promise<Tutor[]> {
   const result = await client().from('tutors').select('*').order('name')
-  return unwrap<Tutor[]>(result, 'Не удалось загрузить репетиторов')
+  return unwrap<Tutor[]>(result, 'loadTutors')
 }
 
 export async function createTutor({ name, language, consent }: CreateTutorInput): Promise<Tutor> {
@@ -18,10 +18,10 @@ export async function createTutor({ name, language, consent }: CreateTutorInput)
     .insert({ name: name.trim(), language, consent_at: consent ? new Date().toISOString() : null })
     .select('*')
     .single()
-  return unwrap<Tutor>(result, 'Не удалось сохранить репетитора')
+  return unwrap<Tutor>(result, 'saveTutor')
 }
 
 export async function confirmTutorConsent(id: string): Promise<void> {
   const result = await client().from('tutors').update({ consent_at: new Date().toISOString() }).eq('id', id)
-  check(result, 'Не удалось сохранить согласие репетитора')
+  check(result, 'saveConsent')
 }

@@ -1,6 +1,6 @@
 import type { LessonStatus } from '@/api/types'
+import { useT } from '@/i18n'
 import { cn } from '@/ui'
-import { STATUS_TEXT } from './format'
 
 export interface StatusLineProps {
   status: Exclude<LessonStatus, 'ready'>
@@ -9,11 +9,13 @@ export interface StatusLineProps {
 }
 
 export function StatusLine({ status, error, className }: StatusLineProps) {
+  const t = useT()
   const failed = status === 'failed'
+  const text = t(`status.${status}`)
   return (
-    <span className={cn('flex items-center gap-2 text-[13px]', failed ? 'text-pen-red' : 'text-amber-text', className)}>
-      <span aria-hidden className={cn('inline-block size-2 shrink-0 rounded-full', failed ? 'bg-pen-red' : 'bg-amber')} />
-      <span className="min-w-0 truncate">{failed && error ? `${STATUS_TEXT.failed}: ${error}` : STATUS_TEXT[status]}</span>
+    <span className={cn('flex items-start gap-2 text-[13px]', failed ? 'text-pen-red' : 'text-amber-text', className)}>
+      <span aria-hidden className={cn('mt-1.5 inline-block size-2 shrink-0 rounded-full', failed ? 'bg-pen-red' : 'bg-amber')} />
+      <span className="min-w-0">{failed && error ? `${text}: ${error}` : text}</span>
     </span>
   )
 }

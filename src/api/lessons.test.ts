@@ -47,7 +47,7 @@ describe('uploadAudio', () => {
   it('does not update or invoke when the upload fails', async () => {
     upload.mockResolvedValue({ data: null, error: { message: 'Payload too large' } })
 
-    await expect(uploadAudio('l1', file)).rejects.toThrow('Не удалось загрузить файл: Payload too large')
+    await expect(uploadAudio('l1', file)).rejects.toMatchObject({ code: 'uploadFile', detail: 'Payload too large' })
     expect(update).not.toHaveBeenCalled()
     expect(invoke).not.toHaveBeenCalled()
   })
@@ -55,7 +55,7 @@ describe('uploadAudio', () => {
   it('does not invoke when saving audio_path fails', async () => {
     eq.mockResolvedValue({ data: null, error: { message: 'row not found' } })
 
-    await expect(uploadAudio('l1', file)).rejects.toThrow('Не удалось сохранить путь к файлу: row not found')
+    await expect(uploadAudio('l1', file)).rejects.toMatchObject({ code: 'saveAudioPath', detail: 'row not found' })
     expect(invoke).not.toHaveBeenCalled()
   })
 
@@ -63,6 +63,6 @@ describe('uploadAudio', () => {
     const response = new Response(JSON.stringify({ error: 'DEEPGRAM_API_KEY missing' }), { status: 500 })
     invoke.mockResolvedValue({ data: null, error: new FunctionsHttpError(response) })
 
-    await expect(uploadAudio('l1', file)).rejects.toThrow('Не удалось запустить расшифровку: DEEPGRAM_API_KEY missing')
+    await expect(uploadAudio('l1', file)).rejects.toMatchObject({ code: 'transcribe', detail: 'DEEPGRAM_API_KEY missing' })
   })
 })

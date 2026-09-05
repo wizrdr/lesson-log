@@ -3,23 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { createLesson, uploadAudio } from '@/api/lessons'
 import { confirmTutorConsent, createTutor } from '@/api/tutors'
 import type { Tutor, TutorLanguage } from '@/api/types'
+import { useErrorText, useT } from '@/i18n'
 import { Button, Field, Input, Segmented, Select, Sheet, Toggle } from '@/ui'
-import { LANGUAGE_LABELS, formatBytes, todayISO } from './format'
+import { formatBytes, todayISO } from './format'
 
 const NEW_TUTOR = 'new'
 const STORAGE_LIMIT_BYTES = 50 * 1024 * 1024
-const LANGUAGE_OPTIONS = (Object.keys(LANGUAGE_LABELS) as TutorLanguage[]).map((value) => ({
-  value,
-  label: LANGUAGE_LABELS[value],
-}))
+const TUTOR_LANGUAGES: TutorLanguage[] = ['pl', 'en']
 
 type Stage = 'idle' | 'tutor' | 'lesson' | 'upload'
-
-const STAGE_TEXT: Record<Exclude<Stage, 'idle'>, string> = {
-  tutor: 'Сохраняем репетитора…',
-  lesson: 'Создаём урок…',
-  upload: 'Загружаем файл…',
-}
 
 export interface UploadSheetProps {
   open: boolean
@@ -30,6 +22,8 @@ export interface UploadSheetProps {
 
 export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadSheetProps) {
   const navigate = useNavigate()
+  const t = useT()
+  const errorText = useErrorText()
   const [tutorId, setTutorId] = useState('')
   const [name, setName] = useState('')
   const [language, setLanguage] = useState<TutorLanguage>('pl')
@@ -37,7 +31,7 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
   const [date, setDate] = useState(todayISO)
   const [file, setFile] = useState<File | null>(null)
   const [stage, setStage] = useState<Stage>('idle')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<unknown>(null)
   const lessonIdRef = useRef<string | null>(null)
 
   function close() {
@@ -83,7 +77,7 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
       await uploadAudio(lessonIdRef.current, file)
       navigate(`/lessons/${lessonIdRef.current}`)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(e)
     } finally {
       setStage('idle')
     }
@@ -93,62 +87,66 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
     <Sheet
       open={open}
       onClose={close}
-      title="Загрузить урок"
+      title={t('upload.title')}
       footer={
         <div className="flex flex-col gap-2">
-          {busy && <p className="text-center text-[13px] text-muted">{STAGE_TEXT[stage]}</p>}
-          {error && <p className="text-[13px] text-pen-red">{error}</p>}
+          {stage !== 'idle' && <p className="text-center text-[13px] text-muted">{t(`upload.stage.${stage}`)}</p>}
+          {error !== null && <p className="text-[13px] text-pen-red">{errorText(error)}</p>}
           <Button full disabled={!canSubmit} loading={busy} onClick={() => void submit()}>
-            Загрузить
+            {t('upload.submit')}
           </Button>
         </div>
       }
     >
       <div className="flex flex-col gap-4">
         {tutors.length > 0 && (
-          <Field label="Репетитор">
-            <Select aria-label="Репетитор" value={effectiveTutorId} onChange={(e) => setTutorId(e.target.value)}>
-              {tutors.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} · {LANGUAGE_LABELS[t.language]}
+          <Field label={t('upload.tutor')}>
+            <Select aria-label={t('upload.tutor')} value={effectiveTutorId} onChange={(e) => setTutorId(e.target.value)}>
+              {tutors.map((tutor) => (
+                <option key={tutor.id} value={tutor.id}>
+                  {tutor.name} · {t(`language.${tutor.language}`)}
                 </option>
               ))}
-              <option value={NEW_TUTOR}>Новый репетитор</option>
+              <option value={NEW_TUTOR}>{t('upload.newTutor')}</option>
             </Select>
           </Field>
         )}
 
         {isNew && (
           <>
-            <Field label="Имя репетитора">
+            <Field label={t('upload.tutorName')}>
               <Input
-                aria-label="Имя репетитора"
+                aria-label={t('upload.tutorName')}
                 autoFocus={tutors.length === 0}
                 value={name}
-                placeholder="Анна"
+                placeholder={t('upload.tutorNamePlaceholder')}
                 onChange={(e) => setName(e.target.value)}
               />
             </Field>
-            <Field label="Язык">
-              <Segmented options={LANGUAGE_OPTIONS} value={language} onChange={(v) => setLanguage(v as TutorLanguage)} />
+            <Field label={t('upload.language')}>
+              <Segmented
+                options={TUTOR_LANGUAGES.map((value) => ({ value, label: t(`language.${value}`) }))}
+                value={language}
+                onChange={(v) => setLanguage(v as TutorLanguage)}
+              />
             </Field>
           </>
         )}
 
         {needsConsent && (
           <div className="flex flex-col gap-1">
-            <Toggle label="Репетитор предупреждён о записи" checked={consent} onChange={setConsent} />
-            <p className="text-[13px] text-muted">Без согласия репетитора урок записывать нельзя.</p>
+            <Toggle label={t('upload.consent')} checked={consent} onChange={setConsent} />
+            <p className="text-[13px] text-muted">{t('upload.consentHint')}</p>
           </div>
         )}
 
-        <Field label="Дата урока">
-          <Input aria-label="Дата урока" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <Field label={t('upload.date')}>
+          <Input aria-label={t('upload.date')} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </Field>
 
-        <Field label="Запись" hint="Zoom: audio_only.m4a из локальной записи. iPhone: файл из Диктофона.">
+        <Field label={t('upload.file')} hint={t('upload.fileHint')}>
           <input
-            aria-label="Запись урока"
+            aria-label={t('upload.fileAria')}
             type="file"
             accept="audio/*,video/mp4,.m4a"
             disabled={busy}
@@ -157,14 +155,10 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
           />
           {file && (
             <p className="text-[13px] text-muted">
-              {file.name} · {formatBytes(file.size)}
+              {file.name} · {formatBytes(file.size, t)}
             </p>
           )}
-          {tooBig && (
-            <p className="text-[13px] text-amber-text">
-              Файл больше 50 МБ — это лимит Storage на бесплатном тарифе, загрузка может не пройти.
-            </p>
-          )}
+          {tooBig && <p className="text-[13px] text-amber-text">{t('upload.tooBig')}</p>}
         </Field>
       </div>
     </Sheet>

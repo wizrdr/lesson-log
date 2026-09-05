@@ -1,5 +1,5 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
-import { client, currentUserId, functionErrorMessage, unwrap, check } from './client'
+import { ApiError, check, client, currentUserId, functionErrorMessage, unwrap } from './client'
 import type { EntryType, Lesson, Tutor } from './types'
 
 export type LessonTutor = Pick<Tutor, 'name' | 'language'>
@@ -28,7 +28,7 @@ export async function listLessons(): Promise<LessonListItem[]> {
     .is('entries.deleted_at', null)
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
-  const rows = unwrap<ListRow[]>(result, 'Не удалось загрузить уроки')
+  const rows = unwrap<ListRow[]>(result, 'loadLessons')
   return rows.map(({ entries, ...lesson }) => {
     const counts: EntryCounts = { correction: 0, vocab: 0, rule: 0 }
     for (const e of entries ?? []) counts[e.type] += 1
@@ -38,17 +38,17 @@ export async function listLessons(): Promise<LessonListItem[]> {
 
 export async function getLesson(id: string): Promise<LessonWithTutor> {
   const result = await client().from('lessons').select(WITH_TUTOR).eq('id', id).single()
-  return unwrap<LessonWithTutor>(result, 'Не удалось загрузить урок')
+  return unwrap<LessonWithTutor>(result, 'loadLesson')
 }
 
 export async function createLesson({ tutorId, date }: { tutorId: string; date: string }): Promise<Lesson> {
   const result = await client().from('lessons').insert({ tutor_id: tutorId, date }).select('*').single()
-  return unwrap<Lesson>(result, 'Не удалось создать урок')
+  return unwrap<Lesson>(result, 'createLesson')
 }
 
 export async function requestTranscription(lessonId: string): Promise<void> {
   const { error } = await client().functions.invoke('ll-transcribe', { body: { lessonId } })
-  if (error) throw new Error(`Не удалось запустить расшифровку: ${await functionErrorMessage(error)}`)
+  if (error) throw new ApiError('transcribe', await functionErrorMessage(error))
 }
 
 export async function uploadAudio(lessonId: string, file: File): Promise<void> {
@@ -56,8 +56,8 @@ export async function uploadAudio(lessonId: string, file: File): Promise<void> {
   const userId = await currentUserId()
   const path = `${userId}/${lessonId}.m4a`
   const upload = await c.storage.from('audio').upload(path, file, { contentType: file.type || 'audio/mp4', upsert: true })
-  check(upload, 'Не удалось загрузить файл')
-  check(await c.from('lessons').update({ audio_path: path }).eq('id', lessonId), 'Не удалось сохранить путь к файлу')
+  check(upload, 'uploadFile')
+  check(await c.from('lessons').update({ audio_path: path }).eq('id', lessonId), 'saveAudioPath')
   await requestTranscription(lessonId)
 }
 

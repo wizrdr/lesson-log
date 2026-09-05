@@ -1,22 +1,20 @@
 import type { ReactNode } from 'react'
+import { useT } from '@/i18n'
 import { supabaseConfigured } from '@/lib/supabase'
 import { LoginScreen } from './LoginScreen'
 import { useSession } from './session'
 
 function SetupNotice() {
+  const t = useT()
   return (
     <main className="paper flex min-h-dvh items-center justify-center p-6 text-text">
       <div className="flex w-full max-w-sm flex-col gap-3">
-        <h1 className="font-serif text-2xl font-semibold">Supabase не настроен</h1>
+        <h1 className="font-serif text-2xl font-semibold">{t('setup.title')}</h1>
         <p className="text-sm text-muted">
-          Не заданы переменные <code className="text-text">VITE_SUPABASE_URL</code> и{' '}
+          {t('setup.missing')} <code className="text-text">VITE_SUPABASE_URL</code>,{' '}
           <code className="text-text">VITE_SUPABASE_ANON_KEY</code>.
         </p>
-        <p className="text-sm text-muted">
-          Скопируйте <code className="text-text">.env.example</code> в <code className="text-text">.env</code>, вставьте
-          значения из проекта Supabase и перезапустите dev-сервер. Для сайта на GitHub Pages те же значения задаются как
-          repo variables.
-        </p>
+        <p className="text-sm text-muted">{t('setup.howTo', { example: '.env.example', env: '.env' })}</p>
       </div>
     </main>
   )

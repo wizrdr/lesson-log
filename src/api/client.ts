@@ -1,27 +1,38 @@
 import { FunctionsHttpError } from '@supabase/supabase-js'
+import type { ApiErrorCode } from '@/i18n/types'
 import { supabase } from '@/lib/supabase'
 
+export class ApiError extends Error {
+  constructor(
+    readonly code: ApiErrorCode,
+    readonly detail?: string,
+  ) {
+    super(detail ? `${code}: ${detail}` : code)
+    this.name = 'ApiError'
+  }
+}
+
 export function client(): NonNullable<typeof supabase> {
-  if (!supabase) throw new Error('Supabase не настроен')
+  if (!supabase) throw new ApiError('notConfigured')
   return supabase
 }
 
 export async function currentUserId(): Promise<string> {
   const { data, error } = await client().auth.getSession()
-  if (error) throw new Error(error.message)
+  if (error) throw new ApiError('signedOut', error.message)
   const id = data.session?.user.id
-  if (!id) throw new Error('Нужно войти в аккаунт')
+  if (!id) throw new ApiError('signedOut')
   return id
 }
 
-export function unwrap<T>(result: { data: T | null; error: { message: string } | null }, what: string): T {
-  if (result.error) throw new Error(`${what}: ${result.error.message}`)
-  if (result.data === null) throw new Error(`${what}: пустой ответ`)
+export function unwrap<T>(result: { data: T | null; error: { message: string } | null }, code: ApiErrorCode): T {
+  if (result.error) throw new ApiError(code, result.error.message)
+  if (result.data === null) throw new ApiError(code)
   return result.data
 }
 
-export function check(result: { error: { message: string } | null }, what: string): void {
-  if (result.error) throw new Error(`${what}: ${result.error.message}`)
+export function check(result: { error: { message: string } | null }, code: ApiErrorCode): void {
+  if (result.error) throw new ApiError(code, result.error.message)
 }
 
 export async function functionErrorMessage(error: unknown): Promise<string> {

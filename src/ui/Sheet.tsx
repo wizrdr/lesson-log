@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useT } from '@/i18n'
 import { cn } from './cn'
 import { CloseIcon } from './icons'
 
@@ -38,6 +39,7 @@ function useMounted(open: boolean): boolean {
 }
 
 export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
+  const t = useT()
   const mounted = useMounted(open)
   const [shown, setShown] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -109,7 +111,7 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
           <h2 className="font-serif text-xl font-semibold text-text">{title}</h2>
           <button
             type="button"
-            aria-label="Закрыть"
+            aria-label={t('sheet.close')}
             data-sheet-close
             onClick={onClose}
             className="-mr-2 flex size-11 items-center justify-center rounded-full text-muted transition-colors duration-fast hover:bg-surface-raised active:bg-surface-raised"

@@ -22,6 +22,7 @@ vi.mock('@/api/tutors', () => ({
   confirmTutorConsent: vi.fn(),
 }))
 
+import { setLang } from '@/i18n'
 import { LessonsPage } from './LessonsPage'
 
 const tutor: Tutor = {
@@ -67,6 +68,23 @@ describe('LessonsPage', () => {
     listTutors.mockReset().mockResolvedValue([])
     countDueCards.mockReset().mockResolvedValue(0)
     listRecurringCorrections.mockReset().mockResolvedValue([])
+  })
+
+  afterEach(() => setLang('ru'))
+
+  it('switches the interface language with the globe button', async () => {
+    listLessons.mockResolvedValue([lesson({ id: 'l1', status: 'ready', entryCount: 2, counts: { correction: 1, vocab: 1, rule: 0 } })])
+    renderPage()
+    expect(await screen.findByRole('heading', { name: 'Уроки' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'English' }))
+    expect(screen.getByRole('heading', { name: 'Lessons' })).toBeInTheDocument()
+    expect(screen.getByText('2 entries · 1 correction, 1 word')).toBeInTheDocument()
+    expect(screen.getByText('Анна · Polish')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /September 5/ })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Русский' }))
+    expect(screen.getByRole('heading', { name: 'Уроки' })).toBeInTheDocument()
   })
 
   it('shows the empty state when there are no lessons', async () => {
