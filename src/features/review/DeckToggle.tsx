@@ -31,7 +31,6 @@ export function DeckToggle({ entryId, inDeck, onChange, onError, className }: De
 
   return (
     <IconButton
-      size="sm"
       label={inDeck ? t('deck.remove') : t('deck.add')}
       aria-pressed={inDeck}
       disabled={busy}

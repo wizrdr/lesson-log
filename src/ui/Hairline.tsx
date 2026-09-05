@@ -10,7 +10,7 @@ export const HairlineList = forwardRef<HTMLUListElement, HairlineListProps>(func
   ref,
 ) {
   return (
-    <ul ref={ref} className={cn('m-0 list-none border-y border-border p-0 divide-y divide-border', className)} {...rest}>
+    <ul ref={ref} className={cn('m-0 list-none p-0 hairline-t [&>li]:hairline-b', className)} {...rest}>
       {children}
     </ul>
   )
@@ -25,7 +25,7 @@ export const HairlineBlock = forwardRef<HTMLDivElement, HairlineBlockProps>(func
   ref,
 ) {
   return (
-    <div ref={ref} className={cn('border-y border-border py-3.5', className)} {...rest}>
+    <div ref={ref} className={cn('hairline-t hairline-b py-3', className)} {...rest}>
       {children}
     </div>
   )

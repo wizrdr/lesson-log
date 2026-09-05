@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { createManualEntry, softDeleteEntry, updateEntry, type EntryInput, type JournalEntry } from '@/api/entries'
 import type { Entry, EntryType } from '@/api/types'
 import { useErrorText, useT } from '@/i18n'
-import { Button, Field, Input, Segmented, Sheet, Textarea } from '@/ui'
+import { Button, Field, Segmented, Sheet, Textarea } from '@/ui'
 
 const TYPES: EntryType[] = ['correction', 'vocab', 'rule']
 
@@ -66,7 +66,7 @@ export function EntrySheet({ open, entry, onClose, onCreated, onUpdated, onDelet
       title={editing ? t('entry.editTitle') : t('entry.newTitle')}
       footer={
         <div className="flex flex-col gap-2">
-          {error !== null && <p className="text-[13px] text-pen-red">{errorText(error)}</p>}
+          {error !== null && <p className="text-[13px] leading-5 text-pen-red">{errorText(error)}</p>}
           <Button full disabled={!canSubmit} loading={busy === 'save'} onClick={() => void submit()}>
             {editing ? t('entry.save') : t('entry.create')}
           </Button>
@@ -87,10 +87,10 @@ export function EntrySheet({ open, entry, onClose, onCreated, onUpdated, onDelet
           />
         </Field>
         <Field label={t('entry.original')}>
-          <Input aria-label={t('entry.original')} autoFocus value={original} onChange={(e) => setOriginal(e.target.value)} />
+          <Textarea aria-label={t('entry.original')} autoGrow autoFocus value={original} onChange={(e) => setOriginal(e.target.value)} />
         </Field>
         <Field label={t('entry.corrected')}>
-          <Input aria-label={t('entry.corrected')} value={corrected} onChange={(e) => setCorrected(e.target.value)} />
+          <Textarea aria-label={t('entry.corrected')} autoGrow value={corrected} onChange={(e) => setCorrected(e.target.value)} />
         </Field>
         <Field label={t('entry.explanation')} hint={t('entry.explanationHint')}>
           <Textarea aria-label={t('entry.explanation')} rows={2} value={explanation} onChange={(e) => setExplanation(e.target.value)} />

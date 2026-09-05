@@ -80,19 +80,19 @@ export function ReviewPage() {
   return (
     <Page title={t('tabs.review')} className="lg:ml-auto lg:mr-auto">
       {stats && (
-        <dl className="grid grid-cols-3 gap-4 px-6 pt-5" data-testid="deck-stats">
+        <dl className="m-0 flex gap-6 px-6 pt-6" data-testid="deck-stats">
           <Stat label={t('review.due')} value={stats.due} />
           <Stat label={t('review.new')} value={stats.new} />
           <Stat label={t('review.total')} value={stats.total} />
         </dl>
       )}
 
-      {loadError !== null && <p className="px-6 pt-6 text-[13px] text-pen-red">{errorText(loadError)}</p>}
+      {loadError !== null && <p className="px-6 pt-6 text-[13px] leading-5 text-pen-red">{errorText(loadError)}</p>}
 
       {queue === null && loadError === null && <div className="h-24" aria-busy />}
 
       {queue && !current && (
-        <p className="px-6 pt-10 font-serif text-lg italic text-muted">
+        <p className="px-6 pt-12 font-serif text-lg leading-6 italic text-muted">
           {t('review.done')}
           {reviewed > 0 && <> {t('review.session', { cards: t.plural('cards', reviewed) })}</>}
         </p>
@@ -102,7 +102,7 @@ export function ReviewPage() {
         <div className="flex flex-col gap-5 pt-8">
           <Card card={current} flipped={flipped} onFlip={() => setFlipped(true)} />
 
-          {saveError !== null && <p className="px-6 text-[13px] text-pen-red">{errorText(saveError)}</p>}
+          {saveError !== null && <p className="px-6 text-[13px] leading-5 text-pen-red">{errorText(saveError)}</p>}
 
           {flipped && intervals && (
             <div className="grid grid-cols-4 gap-2 px-6" data-testid="ratings">
@@ -124,9 +124,9 @@ export function ReviewPage() {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">{label}</dt>
-      <dd className="m-0 font-serif text-[28px] font-semibold leading-none tracking-[-0.01em]">{value}</dd>
+    <div className="flex flex-col">
+      <dt className="text-[11px] leading-5 font-semibold uppercase tracking-[0.12em] whitespace-nowrap text-faint">{label}</dt>
+      <dd className="m-0 font-serif text-[28px] leading-7 font-semibold tracking-[-0.01em]">{value}</dd>
     </div>
   )
 }
@@ -135,6 +135,7 @@ function Card({ card, flipped, onFlip }: { card: DueCard; flipped: boolean; onFl
   const t = useT()
   const { lang } = useLocale()
   const { entry } = card
+  const textLang = entry.lesson?.tutor?.language === 'pl' ? 'pl' : undefined
 
   const face = (
     <button
@@ -144,8 +145,9 @@ function Card({ card, flipped, onFlip }: { card: DueCard; flipped: boolean; onFl
       className="flex w-full flex-col items-start gap-3 px-6 py-8 text-left focus-ring-inset"
     >
       <span
+        lang={textLang}
         className={cn(
-          'font-serif font-semibold leading-[1.25] tracking-[-0.01em]',
+          'font-serif font-semibold leading-[1.25] tracking-[-0.01em] wrap-anywhere',
           entry.type === 'vocab' ? 'text-[28px]' : 'text-[24px]',
         )}
       >
@@ -162,12 +164,18 @@ function Card({ card, flipped, onFlip }: { card: DueCard; flipped: boolean; onFl
   const back = (
     <div className="flex flex-col gap-3 px-6 py-8" data-testid="card-back">
       {entry.type === 'correction' ? (
-        <s className="font-serif text-lg leading-[1.3] text-pen-red decoration-[1.5px]">{entry.original}</s>
+        <s lang={textLang} className="font-serif text-lg leading-6 text-pen-red decoration-[1.5px] wrap-anywhere">
+          {entry.original}
+        </s>
       ) : (
-        <p className="font-serif text-lg leading-[1.3] text-muted">{entry.original}</p>
+        <p lang={textLang} className="font-serif text-lg leading-6 text-muted wrap-anywhere">
+          {entry.original}
+        </p>
       )}
       {entry.corrected && (
-        <strong className="font-serif text-[24px] font-semibold leading-[1.25] text-ink-green">{entry.corrected}</strong>
+        <strong lang={textLang} className="font-serif text-[24px] font-semibold leading-[1.25] text-ink-green wrap-anywhere">
+          {entry.corrected}
+        </strong>
       )}
       {entry.explanation && <p className="text-[15px] leading-[1.45] text-muted">{entry.explanation}</p>}
       {entry.quote && (

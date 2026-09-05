@@ -86,13 +86,14 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
   )
   const now = new Date().toISOString()
   const dueCount = entries.filter((e) => e.card !== null && e.card.due <= now).length
+  const textLang = lesson.tutor?.language === 'pl' ? 'pl' : undefined
   const toggle = (entry: LessonEntry) => (
     <DeckToggle
       entryId={entry.id}
       inDeck={entry.card !== null}
       onChange={(inDeck) => setInDeck(entry.id, inDeck)}
       onError={setDeckError}
-      className="-mt-1 -mr-2 shrink-0"
+      className="-my-2.5 shrink-0"
     />
   )
 
@@ -102,13 +103,27 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
       subtitle={ready ? `${tutorLine} · ${t.plural('entries', entries.length)}` : tutorLine}
       back={back}
       className={column}
+      footer={
+        ready && entries.length > 0 ? (
+          dueCount > 0 ? (
+            <Button size="lg" full onClick={() => navigate('/review')}>
+              <ReviewIcon size={20} />
+              {t('lesson.review', { cards: t.plural('cards', dueCount) })}
+            </Button>
+          ) : (
+            <p className="flex min-h-13 items-center justify-center text-center font-serif text-base leading-6 italic text-muted">
+              {t('lesson.allReviewed')}
+            </p>
+          )
+        ) : undefined
+      }
     >
       {lesson.status !== 'ready' && (
         <div className="flex flex-col items-start gap-4 px-6 pt-6">
           <StatusLine status={lesson.status} error={lesson.error} className="text-[15px]" />
           {lesson.status === 'failed' && (
             <>
-              {retryError !== null && <p className="text-[13px] text-pen-red">{errorText(retryError)}</p>}
+              {retryError !== null && <p className="text-[13px] leading-5 text-pen-red">{errorText(retryError)}</p>}
               <Button variant="secondary" size="sm" loading={retrying} onClick={() => void retry()}>
                 {t('lesson.retry')}
               </Button>
@@ -117,26 +132,32 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
         </div>
       )}
 
-      {loadError !== null && <p className="px-6 pt-6 text-[13px] text-pen-red">{errorText(loadError)}</p>}
-      {deckError !== null && <p className="px-6 pt-6 text-[13px] text-pen-red">{errorText(deckError)}</p>}
+      {loadError !== null && <p className="px-6 pt-6 text-[13px] leading-5 text-pen-red">{errorText(loadError)}</p>}
+      {deckError !== null && <p className="px-6 pt-6 text-[13px] leading-5 text-pen-red">{errorText(deckError)}</p>}
 
-      {ready && groups.length === 0 && <p className="px-6 pt-6 font-serif italic text-muted">{t('lesson.noEntries')}</p>}
+      {ready && groups.length === 0 && <p className="px-6 pt-6 font-serif leading-6 italic text-muted">{t('lesson.noEntries')}</p>}
 
-      <div>
+      <div className="pb-6">
         {groups.map((g) => (
           <Section key={g.type} title={t(g.title)} count={g.items.length}>
             {g.type === 'vocab' ? (
-              <HairlineBlock className="grid grid-cols-2 gap-x-5 gap-y-2.5">
+              <HairlineBlock className="grid grid-cols-1 gap-x-5 gap-y-6 pl-6 pr-3 sm:grid-cols-2">
                 {g.items.map((entry) => (
-                  <VocabItem key={entry.id} entry={entry} toggle={toggle(entry)} />
+                  <VocabItem key={entry.id} entry={entry} lang={textLang} toggle={toggle(entry)} />
                 ))}
               </HairlineBlock>
             ) : (
               <HairlineList>
                 {g.items.map((entry) => (
-                  <li key={entry.id} className="flex items-start gap-2 py-3.5">
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      {g.type === 'correction' ? <CorrectionText entry={entry} /> : <p className="font-serif text-[17px] leading-[1.35]">{entry.original}</p>}
+                  <li key={entry.id} className="flex items-start gap-2 pl-6 pr-3 py-3">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      {g.type === 'correction' ? (
+                        <CorrectionText entry={entry} lang={textLang} />
+                      ) : (
+                        <p lang={textLang} className="font-serif text-lg leading-6 wrap-anywhere">
+                          {entry.original}
+                        </p>
+                      )}
                       <EntryMeta entry={entry} />
                     </div>
                     {toggle(entry)}
@@ -149,32 +170,23 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
 
         {lesson.transcript && (
           <details className="px-6 pt-6">
-            <summary className="cursor-pointer select-none text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">{t('lesson.transcript')}</summary>
-            <p className="whitespace-pre-wrap pt-3 font-serif text-[15px] leading-[1.5] text-muted">{lesson.transcript}</p>
+            <summary className="cursor-pointer select-none text-[11px] leading-6 font-semibold uppercase tracking-[0.12em] text-faint">
+              {t('lesson.transcript')}
+            </summary>
+            <p lang={textLang} className="whitespace-pre-wrap font-serif text-[15px] leading-6 text-muted">
+              {lesson.transcript}
+            </p>
           </details>
         )}
       </div>
-
-      {ready && entries.length > 0 && (
-        <div className="sticky bottom-0 bg-bg px-6 pt-4 pb-2">
-          {dueCount > 0 ? (
-            <Button size="lg" full onClick={() => navigate('/review')}>
-              <ReviewIcon size={20} />
-              {t('lesson.review', { cards: t.plural('cards', dueCount) })}
-            </Button>
-          ) : (
-            <p className="text-center font-serif text-base italic text-muted">{t('lesson.allReviewed')}</p>
-          )}
-        </div>
-      )}
     </Page>
   )
 }
 
 function Section({ title, count, children }: { title: string; count: number; children: ReactNode }) {
   return (
-    <section className="px-6 pt-6">
-      <h2 className="pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+    <section className="pt-6">
+      <h2 className="px-6 text-[11px] leading-6 font-semibold uppercase tracking-[0.12em] text-faint">
         {title} · {count}
       </h2>
       {children}
@@ -182,12 +194,12 @@ function Section({ title, count, children }: { title: string; count: number; chi
   )
 }
 
-function CorrectionText({ entry }: { entry: LessonEntry }) {
+function CorrectionText({ entry, lang }: { entry: LessonEntry; lang?: string }) {
   const original = <s className="text-pen-red decoration-[1.5px]">{entry.original}</s>
   const corrected = entry.corrected && <strong className="font-semibold text-ink-green">{entry.corrected}</strong>
   const stacked = entry.original.length > LONG_ORIGINAL
   return (
-    <p className="font-serif text-lg leading-[1.35]">
+    <p lang={lang} className="font-serif text-lg leading-6 wrap-anywhere">
       {stacked ? (
         <>
           <span className="block">{original}</span>
@@ -203,12 +215,14 @@ function CorrectionText({ entry }: { entry: LessonEntry }) {
   )
 }
 
-function VocabItem({ entry, toggle }: { entry: LessonEntry; toggle: ReactNode }) {
+function VocabItem({ entry, lang, toggle }: { entry: LessonEntry; lang?: string; toggle: ReactNode }) {
   return (
-    <div className="flex min-w-0 items-start gap-1">
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="font-serif text-[17px] font-semibold leading-[1.3]">{entry.original}</span>
-        {entry.corrected && <span className="text-[13px] text-muted">{entry.corrected}</span>}
+    <div className="flex min-w-0 items-start gap-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <span lang={lang} className="font-serif text-lg leading-6 font-semibold wrap-anywhere">
+          {entry.original}
+        </span>
+        {entry.corrected && <span className="text-[13px] leading-5 text-muted">{entry.corrected}</span>}
         <EntryMeta entry={entry} />
       </div>
       {toggle}
@@ -220,9 +234,9 @@ function EntryMeta({ entry }: { entry: LessonEntry }) {
   const t = useT()
   return (
     <>
-      {entry.explanation && <p className="text-[13px] text-muted">{entry.explanation}</p>}
+      {entry.explanation && <p className="text-[13px] leading-5 text-muted">{entry.explanation}</p>}
       {entry.quote && (
-        <details className="text-[13px]">
+        <details className="text-[13px] leading-5">
           <summary className="cursor-pointer select-none text-faint">{t('lesson.quote')}</summary>
           <blockquote className="mt-1 border-l-2 border-border pl-3 font-serif italic text-muted">{entry.quote}</blockquote>
         </details>

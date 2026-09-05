@@ -77,6 +77,9 @@ describe('JournalPage', () => {
   it('re-queries with the type filter and the debounced search', async () => {
     renderPage()
     await screen.findByText('kot')
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Все', 'Правки', 'Слова', 'Правила'])
+    fireEvent.click(screen.getByRole('tab', { name: 'Правки' }))
+    await waitFor(() => expect(listEntries).toHaveBeenLastCalledWith({ type: 'correction', search: undefined }))
     fireEvent.click(screen.getByRole('tab', { name: 'Слова' }))
     await waitFor(() => expect(listEntries).toHaveBeenLastCalledWith({ type: 'vocab', search: undefined }))
 

@@ -11,9 +11,9 @@ import { EntrySheet } from './EntrySheet'
 const ALL = 'all'
 const TYPE_FILTERS: { value: EntryType | typeof ALL; label: TextKey }[] = [
   { value: ALL, label: 'journal.all' },
-  { value: 'correction', label: 'lesson.corrections' },
-  { value: 'vocab', label: 'lesson.vocab' },
-  { value: 'rule', label: 'lesson.rules' },
+  { value: 'correction', label: 'journal.filterCorrection' },
+  { value: 'vocab', label: 'journal.filterVocab' },
+  { value: 'rule', label: 'journal.filterRule' },
 ]
 const SEARCH_DEBOUNCE_MS = 250
 
@@ -92,20 +92,19 @@ export function JournalPage() {
     <Page
       title={t('tabs.journal')}
       action={
-        <Button variant="secondary" size="sm" onClick={() => openSheet(null)}>
+        <Button variant="secondary" size="sm" aria-label={t('journal.add')} onClick={() => openSheet(null)}>
           <PlusIcon size={18} />
-          {t('journal.add')}
+          <span className="sm:hidden">{t('journal.addShort')}</span>
+          <span className="hidden sm:inline">{t('journal.add')}</span>
         </Button>
       }
     >
-      <div className="flex flex-col gap-3 px-6 pt-4">
-        <div className="-mx-6 overflow-x-auto px-6">
-          <Segmented
-            options={TYPE_FILTERS.map(({ value, label }) => ({ value, label: t(label) }))}
-            value={type}
-            onChange={(v) => setType(v as EntryType | typeof ALL)}
-          />
-        </div>
+      <div className="flex flex-col gap-3 px-6 pt-6">
+        <Segmented
+          options={TYPE_FILTERS.map(({ value, label }) => ({ value, label: t(label) }))}
+          value={type}
+          onChange={(v) => setType(v as EntryType | typeof ALL)}
+        />
         <Input
           type="search"
           aria-label={t('journal.search')}
@@ -115,21 +114,21 @@ export function JournalPage() {
         />
       </div>
 
-      {error !== null && <p className="px-6 pt-4 text-[13px] text-pen-red">{errorText(error)}</p>}
+      {error !== null && <p className="px-6 pt-6 text-[13px] leading-5 text-pen-red">{errorText(error)}</p>}
 
       {entries === null && error === null && <div className="h-24" aria-busy />}
 
       {entries?.length === 0 && (
-        <p className="px-6 pt-7 font-serif text-base italic text-muted">{filtered ? t('journal.noMatches') : t('journal.empty')}</p>
+        <p className="px-6 pt-6 font-serif text-base leading-6 italic text-muted">{filtered ? t('journal.noMatches') : t('journal.empty')}</p>
       )}
 
       {groups.map((group) => (
         <section key={group.key} className="pt-6" aria-label={group.title}>
-          <h2 className="px-6 pb-2 font-serif text-base italic text-muted">{group.title}</h2>
+          <h2 className="px-6 font-serif text-base leading-6 italic text-muted">{group.title}</h2>
           <HairlineList>
             {group.items.map((entry) => (
               <li key={entry.id} className="flex items-start gap-2 pl-6 pr-3 py-3">
-                <button type="button" onClick={() => openSheet(entry)} className="min-w-0 flex-1 py-1 text-left focus-ring-inset">
+                <button type="button" onClick={() => openSheet(entry)} className="min-w-0 flex-1 text-left focus-ring-inset">
                   <EntryRow entry={entry} />
                 </button>
                 <DeckToggle
@@ -137,7 +136,7 @@ export function JournalPage() {
                   inDeck={entry.inDeck}
                   onChange={(inDeck) => patch(entry.id, { inDeck })}
                   onError={setError}
-                  className="mt-0.5 shrink-0"
+                  className="-my-2.5 shrink-0"
                 />
               </li>
             ))}
@@ -159,9 +158,10 @@ export function JournalPage() {
 }
 
 function EntryRow({ entry }: { entry: JournalEntry }) {
+  const lang = entry.lesson?.tutor?.language === 'pl' ? 'pl' : undefined
   return (
     <span className="flex flex-col gap-1">
-      <span className="font-serif text-[17px] leading-[1.35]">
+      <span lang={lang} className="font-serif text-lg leading-6 wrap-anywhere">
         {entry.type === 'correction' ? (
           <>
             <s className="text-pen-red decoration-[1.5px]">{entry.original}</s>
@@ -174,7 +174,7 @@ function EntryRow({ entry }: { entry: JournalEntry }) {
           </>
         )}
       </span>
-      {entry.explanation && <span className="text-[13px] text-muted">{entry.explanation}</span>}
+      {entry.explanation && <span className="text-[13px] leading-5 text-muted">{entry.explanation}</span>}
     </span>
   )
 }

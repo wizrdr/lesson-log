@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './styles/fonts.css';
 @import './styles/tokens.css';
 
 @theme inline {
@@ -41,6 +42,30 @@
 @utility paper {
   background-color: var(--bg);
   background-image: var(--paper-lines);
+}
+
+@utility hairline-t {
+  position: relative;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: var(--border);
+    pointer-events: none;
+  }
+}
+
+@utility hairline-b {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1px;
+    background: var(--border);
+    pointer-events: none;
+  }
 }
 
 @utility focus-ring {

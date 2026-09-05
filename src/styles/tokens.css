@@ -4,7 +4,7 @@
   --surface-raised: #ece5d8;
   --text: #2b2622;
   --text-muted: #6b6058;
-  --text-faint: #8a7f75;
+  --text-faint: #7a6e64;
   --border: rgba(43, 38, 34, 0.18);
   --border-strong: rgba(43, 38, 34, 0.36);
 
@@ -13,16 +13,16 @@
   --pen-red: #b83b2f;
   --ink-green: #2f6b4f;
   --amber: #c9962a;
-  --amber-text: #8a6d1f;
+  --amber-text: #7d621a;
   --overlay: rgba(43, 38, 34, 0.4);
 
   --rule-line: rgba(43, 38, 34, 0.07);
   --paper-lines: repeating-linear-gradient(
     to bottom,
     transparent 0px,
-    transparent 31px,
-    var(--rule-line) 31px,
-    var(--rule-line) 32px
+    transparent 23px,
+    var(--rule-line) 23px,
+    var(--rule-line) 24px
   );
 
   --radius-sm: 8px;

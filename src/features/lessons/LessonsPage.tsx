@@ -70,7 +70,7 @@ export function LessonsPage({ embedded = false, selectedId }: LessonsPageProps) 
       }
     >
       {summary && (
-        <p className="px-6 pt-3.5 font-serif text-base italic text-muted" data-testid="summary">
+        <p className="px-6 py-3 font-serif text-base leading-6 italic text-muted" data-testid="summary">
           {dueCards > 0 && t('lessons.dueToday', { cards: t.plural('cards', dueCards) })}
           {dueCards > 0 && recurring && ' '}
           {recurring && (
@@ -82,12 +82,12 @@ export function LessonsPage({ embedded = false, selectedId }: LessonsPageProps) 
         </p>
       )}
 
-      {error !== null && <p className="px-6 pt-4 text-[13px] text-pen-red">{errorText(error)}</p>}
+      {error !== null && <p className="px-6 pt-6 text-[13px] leading-5 text-pen-red">{errorText(error)}</p>}
 
       {lessons === null && error === null && <div className="h-24" aria-busy />}
 
       {lessons?.length === 0 && (
-        <p className="px-6 pt-7 font-serif text-base italic text-muted">
+        <p className="px-6 pt-6 font-serif text-base leading-6 italic text-muted">
           {t('lessons.empty')}{' '}
           <button type="button" className="underline decoration-border-strong underline-offset-4 text-text" onClick={() => setSheetOpen(true)}>
             {t('lessons.uploadFirst')}
@@ -96,29 +96,29 @@ export function LessonsPage({ embedded = false, selectedId }: LessonsPageProps) 
       )}
 
       {lessons && lessons.length > 0 && (
-        <HairlineList className="mt-7">
+        <HairlineList className="mt-6">
           {lessons.map((lesson) => (
             <li key={lesson.id}>
               <Link
                 to={`/lessons/${lesson.id}`}
                 aria-current={lesson.id === selectedId ? 'page' : undefined}
                 className={cn(
-                  'relative grid grid-cols-[92px_minmax(0,1fr)_24px] items-start gap-3 px-6 py-4 transition-colors duration-fast hover:bg-surface-raised focus-ring-inset',
+                  'relative grid grid-cols-[88px_minmax(0,1fr)_20px] items-start gap-x-2 px-6 py-3 transition-colors duration-fast hover:bg-surface-raised focus-ring-inset',
                   lesson.id === selectedId && 'bg-surface-raised before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-ink',
                 )}
               >
-                <span className="font-serif text-[15px] italic leading-[1.3] text-muted">{formatLessonDate(lesson.date, lang)}</span>
+                <span className="font-serif text-sm leading-6 italic text-muted">{formatLessonDate(lesson.date, lang)}</span>
                 <span className="flex min-w-0 flex-col gap-1">
-                  <span className="font-serif text-lg font-semibold leading-[1.25]">
+                  <span className="font-serif text-[17px] leading-6 font-semibold wrap-anywhere">
                     {lesson.tutor ? `${lesson.tutor.name} · ${t(`language.${lesson.tutor.language}`)}` : t('lessons.tutorDeleted')}
                   </span>
                   {lesson.status === 'ready' ? (
-                    <span className="text-[13px] text-muted">{formatEntryBreakdown(lesson.entryCount, lesson.counts, t)}</span>
+                    <span className="text-[13px] leading-5 text-muted">{formatEntryBreakdown(lesson.entryCount, lesson.counts, t)}</span>
                   ) : (
                     <StatusLine status={lesson.status} error={lesson.error} />
                   )}
                 </span>
-                <ChevronRightIcon size={24} className="mt-0.5 text-faint" />
+                <ChevronRightIcon size={20} className="mt-0.5 text-faint" />
               </Link>
             </li>
           ))}

@@ -133,6 +133,7 @@ describe('LessonsPage', () => {
 
     fireEvent.change(screen.getByLabelText('Имя репетитора'), { target: { value: 'Анна' } })
     const file = new File(['x'], 'audio_only.m4a', { type: 'audio/mp4' })
+    expect(screen.getByRole('button', { name: 'Выбрать файл' })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Запись урока'), { target: { files: [file] } })
     expect(screen.getByText('audio_only.m4a · 1 КБ')).toBeInTheDocument()
     expect(uploadButton()).toBeDisabled()

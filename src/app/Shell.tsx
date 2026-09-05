@@ -16,10 +16,10 @@ export function Shell() {
   const tablet = useMediaQuery(MQ_TABLET)
   const desktop = useMediaQuery(MQ_DESKTOP)
   return (
-    <div className={cn('flex h-dvh bg-bg text-text', tablet ? 'flex-row' : 'flex-col')}>
+    <div className={cn('flex h-dvh bg-bg pt-[env(safe-area-inset-top)] text-text', tablet ? 'flex-row' : 'flex-col')}>
       {tablet && <SideNav labels={desktop} />}
       <main className="min-h-0 flex-1 overflow-y-auto">
-        <div className="paper min-h-full pt-[env(safe-area-inset-top)]">
+        <div className="paper flex min-h-full flex-col">
           <Outlet />
         </div>
       </main>
@@ -35,7 +35,7 @@ function SideNav({ labels }: { labels: boolean }) {
     <nav
       data-testid="side-nav"
       className={cn(
-        'flex shrink-0 flex-col border-r border-border bg-bg pt-[env(safe-area-inset-top)]',
+        'flex shrink-0 flex-col border-r border-border bg-bg',
         labels ? 'w-[220px]' : 'w-[72px]',
       )}
     >

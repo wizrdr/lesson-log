@@ -33,6 +33,7 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
   const [stage, setStage] = useState<Stage>('idle')
   const [error, setError] = useState<unknown>(null)
   const lessonIdRef = useRef<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   function close() {
     setTutorId('')
@@ -90,8 +91,8 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
       title={t('upload.title')}
       footer={
         <div className="flex flex-col gap-2">
-          {stage !== 'idle' && <p className="text-center text-[13px] text-muted">{t(`upload.stage.${stage}`)}</p>}
-          {error !== null && <p className="text-[13px] text-pen-red">{errorText(error)}</p>}
+          {stage !== 'idle' && <p className="text-center text-[13px] leading-5 text-muted">{t(`upload.stage.${stage}`)}</p>}
+          {error !== null && <p className="text-[13px] leading-5 text-pen-red">{errorText(error)}</p>}
           <Button full disabled={!canSubmit} loading={busy} onClick={() => void submit()}>
             {t('upload.submit')}
           </Button>
@@ -136,7 +137,7 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
         {needsConsent && (
           <div className="flex flex-col gap-1">
             <Toggle label={t('upload.consent')} checked={consent} onChange={setConsent} />
-            <p className="text-[13px] text-muted">{t('upload.consentHint')}</p>
+            <p className="text-[13px] leading-5 text-muted">{t('upload.consentHint')}</p>
           </div>
         )}
 
@@ -146,19 +147,24 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
 
         <Field label={t('upload.file')} hint={t('upload.fileHint')}>
           <input
+            ref={fileRef}
             aria-label={t('upload.fileAria')}
             type="file"
             accept="audio/*,video/mp4,.m4a"
             disabled={busy}
+            tabIndex={-1}
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="block w-full text-sm text-muted file:mr-3 file:min-h-10 file:rounded-full file:border-[1.5px] file:border-solid file:border-ink file:bg-transparent file:px-4 file:font-semibold file:text-text"
+            className="sr-only"
           />
+          <Button variant="secondary" size="sm" className="self-start" disabled={busy} onClick={() => fileRef.current?.click()}>
+            {t('upload.chooseFile')}
+          </Button>
           {file && (
-            <p className="text-[13px] text-muted">
+            <p className="text-[13px] leading-5 text-muted wrap-anywhere">
               {file.name} · {formatBytes(file.size, t)}
             </p>
           )}
-          {tooBig && <p className="text-[13px] text-amber-text">{t('upload.tooBig')}</p>}
+          {tooBig && <p className="text-[13px] leading-5 text-amber-text">{t('upload.tooBig')}</p>}
         </Field>
       </div>
     </Sheet>

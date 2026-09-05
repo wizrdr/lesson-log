@@ -6,7 +6,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const inputBaseClass = cn(
-  'w-full min-w-0 bg-transparent text-text placeholder:text-faint rounded-md border px-3',
+  'w-full min-w-0 bg-transparent text-base text-text placeholder:text-faint rounded-md border px-3',
   'transition-[border-color] duration-fast ease-out outline-none appearance-none',
   'focus:border-ink',
   'disabled:opacity-40',
@@ -20,7 +20,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <input
       ref={ref}
       aria-invalid={invalid || undefined}
-      className={cn(inputBaseClass, 'h-11', invalid ? 'border-pen-red' : 'border-border-strong', className)}
+      className={cn(inputBaseClass, 'h-11 [&::-webkit-date-and-time-value]:text-left', invalid ? 'border-pen-red' : 'border-border-strong', className)}
       {...rest}
     />
   )
