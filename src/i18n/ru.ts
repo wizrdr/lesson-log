@@ -35,6 +35,7 @@ export const ru = {
   'lessons.empty': 'Уроков пока нет.',
   'lessons.uploadFirst': 'Загрузи первую запись',
   'lessons.tutorDeleted': 'Репетитор удалён',
+  'lessons.pickOne': 'Выбери урок слева',
 
   'lesson.title': 'Урок',
   'lesson.corrections': 'Исправления',

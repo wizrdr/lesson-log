@@ -27,7 +27,7 @@ export function Segmented({ options, value, onChange, className }: SegmentedProp
             className={cn(
               'min-h-9 px-4 rounded-full text-sm font-semibold select-none whitespace-nowrap',
               'transition-[background-color,color] duration-fast ease-out',
-              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+              'focus-ring',
               active ? 'bg-ink text-ink-fg' : 'text-muted hover:text-text',
             )}
           >

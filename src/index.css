@@ -43,6 +43,20 @@
   background-image: var(--paper-lines);
 }
 
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+}
+
+@utility focus-ring-inset {
+  &:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: -2px;
+  }
+}
+
 @layer base {
   html {
     color-scheme: light dark;

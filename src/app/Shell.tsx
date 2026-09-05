@@ -1,7 +1,9 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { useT, type TextKey } from '@/i18n'
-import { cn, BeforeLessonIcon, JournalIcon, LessonsIcon, ReviewIcon, type IconProps } from '@/ui'
+import { useLocale, useT, type TextKey } from '@/i18n'
+import { useMediaQuery } from '@/lib/useMediaQuery'
+import { cn, BeforeLessonIcon, GlobeIcon, JournalIcon, LessonsIcon, ReviewIcon, type IconProps } from '@/ui'
 import type { ComponentType } from 'react'
+import { MQ_DESKTOP, MQ_TABLET } from './breakpoints'
 
 const tabs: { to: string; label: TextKey; Icon: ComponentType<IconProps> }[] = [
   { to: '/', label: 'tabs.lessons', Icon: LessonsIcon },
@@ -11,33 +13,94 @@ const tabs: { to: string; label: TextKey; Icon: ComponentType<IconProps> }[] = [
 ]
 
 export function Shell() {
-  const t = useT()
+  const tablet = useMediaQuery(MQ_TABLET)
+  const desktop = useMediaQuery(MQ_DESKTOP)
   return (
-    <div className="flex h-dvh flex-col bg-bg text-text">
+    <div className={cn('flex h-dvh bg-bg text-text', tablet ? 'flex-row' : 'flex-col')}>
+      {tablet && <SideNav labels={desktop} />}
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="paper min-h-full pt-[env(safe-area-inset-top)]">
           <Outlet />
         </div>
       </main>
-      <nav className="grid grid-cols-4 border-t border-border bg-bg px-2 pt-2.5 pb-[max(env(safe-area-inset-bottom),10px)]">
-        {tabs.map(({ to, label, Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end
-            className={({ isActive }) =>
-              cn(
-                'flex h-11 flex-col items-center justify-center gap-1 text-[11px]',
-                'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink',
-                isActive ? 'font-semibold text-text' : 'font-medium text-faint',
-              )
-            }
-          >
-            <Icon />
-            <span>{t(label)}</span>
-          </NavLink>
-        ))}
-      </nav>
+      {!tablet && <TabBar />}
     </div>
+  )
+}
+
+function SideNav({ labels }: { labels: boolean }) {
+  const t = useT()
+  const { lang, setLang } = useLocale()
+  return (
+    <nav
+      data-testid="side-nav"
+      className={cn(
+        'flex shrink-0 flex-col border-r border-border bg-bg pt-[env(safe-area-inset-top)]',
+        labels ? 'w-[220px]' : 'w-[72px]',
+      )}
+    >
+      {labels && <div className="px-5 pt-6 pb-4 font-serif text-xl font-semibold tracking-[-0.01em]">Lesson Log</div>}
+      <ul className={cn('m-0 flex list-none flex-col p-0', labels ? null : 'pt-4')}>
+        {tabs.map(({ to, label, Icon }) => (
+          <li key={to}>
+            <NavLink
+              to={to}
+              end
+              aria-label={t(label)}
+              title={labels ? undefined : t(label)}
+              className={({ isActive }) =>
+                cn(
+                  'relative flex h-11 items-center gap-3 text-[15px] transition-colors duration-fast hover:bg-surface-raised focus-ring-inset',
+                  labels ? 'px-5' : 'justify-center',
+                  isActive
+                    ? 'font-semibold text-text before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:bg-ink'
+                    : 'font-medium text-muted',
+                )
+              }
+            >
+              <Icon />
+              {labels && <span>{t(label)}</span>}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+      {labels && (
+        <button
+          type="button"
+          onClick={() => setLang(lang === 'ru' ? 'en' : 'ru')}
+          className="mt-auto mb-[max(env(safe-area-inset-bottom),12px)] flex h-11 items-center gap-3 px-5 text-[15px] font-medium text-muted transition-colors duration-fast hover:bg-surface-raised hover:text-text focus-ring-inset"
+        >
+          <GlobeIcon />
+          <span>{t('lang.other')}</span>
+        </button>
+      )}
+    </nav>
+  )
+}
+
+function TabBar() {
+  const t = useT()
+  return (
+    <nav
+      data-testid="tab-bar"
+      className="grid grid-cols-4 border-t border-border bg-bg px-2 pt-2.5 pb-[max(env(safe-area-inset-bottom),10px)]"
+    >
+      {tabs.map(({ to, label, Icon }) => (
+        <NavLink
+          key={to}
+          to={to}
+          end
+          className={({ isActive }) =>
+            cn(
+              'flex h-11 flex-col items-center justify-center gap-1 text-[11px] focus-ring-inset',
+              isActive ? 'font-semibold text-text' : 'font-medium text-faint',
+            )
+          }
+        >
+          <Icon />
+          <span>{t(label)}</span>
+        </NavLink>
+      ))}
+    </nav>
   )
 }

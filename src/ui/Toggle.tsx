@@ -31,7 +31,7 @@ export function Toggle({ checked, onChange, label, id, disabled, className }: To
         onClick={() => onChange(!checked)}
         className={cn(
           'relative shrink-0 h-8 w-13 rounded-full p-0.5 transition-colors duration-normal ease-out',
-          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+          'focus-ring',
           'disabled:opacity-40',
           checked ? 'bg-ink' : 'bg-border-strong',
         )}

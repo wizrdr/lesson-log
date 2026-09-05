@@ -7,17 +7,18 @@ export interface PageProps {
   subtitle?: ReactNode
   action?: ReactNode
   back?: { to: string; label: string }
+  className?: string
   children: ReactNode
 }
 
-export function Page({ title, subtitle, action, back, children }: PageProps) {
+export function Page({ title, subtitle, action, back, className, children }: PageProps) {
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col pb-10">
+    <div className={cn('mx-auto flex w-full max-w-lg flex-col pb-10 md:ml-8 md:mr-0 md:max-w-[640px]', className)}>
       <header className="flex flex-col gap-1.5 px-6 pt-5">
         {back && (
           <Link
             to={back.to}
-            className="-ml-2 flex h-11 items-center gap-1.5 self-start text-sm font-medium text-muted focus-visible:outline-2 focus-visible:outline-ink"
+            className="-ml-2 flex h-11 items-center gap-1.5 self-start px-2 text-sm font-medium text-muted focus-ring"
           >
             <ChevronLeftIcon />
             <span>{back.label}</span>

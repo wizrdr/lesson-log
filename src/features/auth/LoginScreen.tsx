@@ -45,8 +45,8 @@ export function LoginScreen() {
   }
 
   return (
-    <main className="paper flex min-h-dvh items-center justify-center p-6 text-text">
-      <div className="flex w-full max-w-sm flex-col gap-6">
+    <main className="paper flex min-h-dvh items-center justify-center p-6 text-text md:items-start md:pt-[15vh]">
+      <div className="flex w-full max-w-sm flex-col gap-6 md:max-w-[420px]">
         <div className="flex flex-col items-start gap-1.5">
           <h1 className="font-serif text-[34px] font-semibold leading-[1.05] tracking-[-0.01em]">Lesson Log</h1>
           <p className="font-serif text-base italic text-muted">{mode === 'signin' ? t('login.signin') : t('login.signup')}</p>

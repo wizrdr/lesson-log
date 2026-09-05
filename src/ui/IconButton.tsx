@@ -19,7 +19,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       className={cn(
         'inline-flex items-center justify-center rounded-full text-text select-none',
         'transition-colors duration-fast ease-out hover:bg-surface-raised active:bg-surface-raised',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+        'focus-ring',
         'disabled:opacity-40 disabled:pointer-events-none',
         size === 'sm' ? 'size-9 [&>svg]:size-4' : 'size-11 [&>svg]:size-5',
         className,

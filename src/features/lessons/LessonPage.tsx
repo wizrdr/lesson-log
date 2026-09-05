@@ -17,7 +17,11 @@ const GROUPS: { type: EntryType; title: TextKey }[] = [
 
 const LONG_ORIGINAL = 60
 
-export function LessonPage() {
+export interface LessonPageProps {
+  embedded?: boolean
+}
+
+export function LessonPage({ embedded = false }: LessonPageProps) {
   const { id } = useParams()
   const navigate = useNavigate()
   const t = useT()
@@ -56,11 +60,12 @@ export function LessonPage() {
     }
   }
 
-  const back = { to: '/', label: t('tabs.lessons') }
+  const back = embedded ? undefined : { to: '/', label: t('tabs.lessons') }
+  const column = embedded ? 'lg:ml-0 lg:max-w-[720px]' : undefined
 
   if (loadError !== null && !lesson) {
     return (
-      <Page title={t('lesson.title')} back={back}>
+      <Page title={t('lesson.title')} back={back} className={column}>
         <p className="px-6 pt-6 text-[13px] text-pen-red">{errorText(loadError)}</p>
       </Page>
     )
@@ -80,6 +85,7 @@ export function LessonPage() {
       title={formatLessonDate(lesson.date, lang)}
       subtitle={ready ? `${tutorLine} · ${t.plural('entries', entries.length)}` : tutorLine}
       back={back}
+      className={column}
     >
       {lesson.status !== 'ready' && (
         <div className="flex flex-col items-start gap-4 px-6 pt-6">

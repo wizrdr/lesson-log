@@ -7,12 +7,17 @@ import { listTutors } from '@/api/tutors'
 import type { Tutor } from '@/api/types'
 import { Page } from '@/app/Page'
 import { useErrorText, useLocale, useT } from '@/i18n'
-import { Button, ChevronRightIcon, GlobeIcon, HairlineList, IconButton, UploadIcon } from '@/ui'
+import { Button, ChevronRightIcon, cn, GlobeIcon, HairlineList, IconButton, UploadIcon } from '@/ui'
 import { formatEntryBreakdown, formatLessonDate } from './format'
 import { StatusLine } from './StatusLine'
 import { UploadSheet } from './UploadSheet'
 
-export function LessonsPage() {
+export interface LessonsPageProps {
+  embedded?: boolean
+  selectedId?: string
+}
+
+export function LessonsPage({ embedded = false, selectedId }: LessonsPageProps) {
   const t = useT()
   const { lang, setLang } = useLocale()
   const errorText = useErrorText()
@@ -47,11 +52,14 @@ export function LessonsPage() {
   return (
     <Page
       title={t('lessons.title')}
+      className={embedded ? 'lg:ml-0 lg:max-w-none' : undefined}
       action={
         <div className="flex items-center gap-1">
-          <IconButton label={t('lang.other')} onClick={() => setLang(lang === 'ru' ? 'en' : 'ru')}>
-            <GlobeIcon />
-          </IconButton>
+          {!embedded && (
+            <IconButton label={t('lang.other')} onClick={() => setLang(lang === 'ru' ? 'en' : 'ru')}>
+              <GlobeIcon />
+            </IconButton>
+          )}
           <Button variant="secondary" size="sm" aria-label={t('upload.title')} onClick={() => setSheetOpen(true)}>
             <UploadIcon size={18} />
             {t('lessons.upload')}
@@ -91,7 +99,11 @@ export function LessonsPage() {
             <li key={lesson.id}>
               <Link
                 to={`/lessons/${lesson.id}`}
-                className="grid grid-cols-[92px_minmax(0,1fr)_24px] items-start gap-3 px-6 py-4 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink"
+                aria-current={lesson.id === selectedId ? 'page' : undefined}
+                className={cn(
+                  'relative grid grid-cols-[92px_minmax(0,1fr)_24px] items-start gap-3 px-6 py-4 transition-colors duration-fast hover:bg-surface-raised focus-ring-inset',
+                  lesson.id === selectedId && 'bg-surface-raised before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-ink',
+                )}
               >
                 <span className="font-serif text-[15px] italic leading-[1.3] text-muted">{formatLessonDate(lesson.date, lang)}</span>
                 <span className="flex min-w-0 flex-col gap-1">

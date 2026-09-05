@@ -35,6 +35,7 @@ export const en: Dictionary = {
   'lessons.empty': 'No lessons yet.',
   'lessons.uploadFirst': 'Upload the first recording',
   'lessons.tutorDeleted': 'Tutor deleted',
+  'lessons.pickOne': 'Pick a lesson on the left',
 
   'lesson.title': 'Lesson',
   'lesson.corrections': 'Corrections',
