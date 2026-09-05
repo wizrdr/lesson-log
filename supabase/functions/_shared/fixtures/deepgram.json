@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "request_id": "6c1a2f3e-0000-4000-8000-000000000001",
+    "duration": 3725.4,
+    "channels": 1,
+    "models": ["nova-3"]
+  },
+  "results": {
+    "channels": [
+      {
+        "alternatives": [
+          {
+            "transcript": "Dzień dobry. Jak się masz? Dobrze, dziękuję. Wczoraj poszłem do sklepu. Poszedłem, nie poszłem.",
+            "confidence": 0.97
+          }
+        ]
+      }
+    ],
+    "utterances": [
+      { "start": 0.48, "end": 2.1, "speaker": 0, "transcript": "Dzień dobry. Jak się masz?" },
+      { "start": 2.9, "end": 5.6, "speaker": 1, "transcript": "Dobrze, dziękuję. Wczoraj poszłem do sklepu." },
+      { "start": 65.2, "end": 68.0, "speaker": 0, "transcript": "Poszedłem, nie poszłem. Męski rodzaj." },
+      { "start": 3661.0, "end": 3663.0, "speaker": 1, "transcript": "Dziękuję, do zobaczenia." }
+    ]
+  }
+}

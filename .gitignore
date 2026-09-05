@@ -1,0 +1,11 @@
+node_modules
+dist
+dev-dist
+*.log
+.DS_Store
+.env*
+!.env.example
+test-results
+playwright-report
+.playwright-cli/
+supabase/.temp

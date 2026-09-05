@@ -1,0 +1,93 @@
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface-raised: #f0f0f3;
+  --text: #1c1c1e;
+  --text-muted: #6e6e73;
+  --text-faint: #86868c;
+  --border: #e3e3e8;
+  --border-strong: #c9c9d1;
+
+  --accent: #3b6cf6;
+  --accent-fg: #ffffff;
+  --accent-soft: #e6edfe;
+  --on-color: #ffffff;
+
+  --danger: #e5484d;
+  --danger-soft: #fdebec;
+  --success: #2f9e6b;
+  --success-soft: #e3f5ea;
+  --warning: #e2b232;
+  --warning-soft: #fbf3d6;
+  --overlay: rgba(20, 20, 24, 0.4);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.16), 0 -1px 0 rgba(0, 0, 0, 0.04);
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  --dur-fast: 120ms;
+  --dur-normal: 220ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f0f11;
+    --surface: #1a1a1e;
+    --surface-raised: #26262c;
+    --text: #f2f2f5;
+    --text-muted: #9a9aa3;
+    --text-faint: #7a7a84;
+    --border: #2b2b32;
+    --border-strong: #3d3d46;
+
+    --accent: #6f93ff;
+    --accent-fg: #0f0f11;
+    --accent-soft: #1e2740;
+
+    --danger: #f2686c;
+    --danger-soft: #3a1f22;
+    --success: #4fbf87;
+    --success-soft: #1d3327;
+    --warning: #e8c353;
+    --warning-soft: #38311b;
+    --overlay: rgba(0, 0, 0, 0.6);
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(255, 255, 255, 0.06);
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f0f11;
+  --surface: #1a1a1e;
+  --surface-raised: #26262c;
+  --text: #f2f2f5;
+  --text-muted: #9a9aa3;
+  --text-faint: #7a7a84;
+  --border: #2b2b32;
+  --border-strong: #3d3d46;
+
+  --accent: #6f93ff;
+  --accent-fg: #0f0f11;
+  --accent-soft: #1e2740;
+
+  --danger: #f2686c;
+  --danger-soft: #3a1f22;
+  --success: #4fbf87;
+  --success-soft: #1d3327;
+  --warning: #e8c353;
+  --warning-soft: #38311b;
+  --overlay: rgba(0, 0, 0, 0.6);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(255, 255, 255, 0.06);
+}
