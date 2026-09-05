@@ -1,37 +1,39 @@
 :root {
-  --bg: #f5f5f7;
-  --surface: #ffffff;
-  --surface-raised: #f0f0f3;
-  --text: #1c1c1e;
-  --text-muted: #6e6e73;
-  --text-faint: #86868c;
-  --border: #e3e3e8;
-  --border-strong: #c9c9d1;
+  --bg: #f6f1e7;
+  --surface: #f6f1e7;
+  --surface-raised: #ece5d8;
+  --text: #2b2622;
+  --text-muted: #6b6058;
+  --text-faint: #8a7f75;
+  --border: rgba(43, 38, 34, 0.18);
+  --border-strong: rgba(43, 38, 34, 0.36);
 
-  --accent: #3b6cf6;
-  --accent-fg: #ffffff;
-  --accent-soft: #e6edfe;
-  --on-color: #ffffff;
+  --ink: #2b2622;
+  --ink-fg: #f6f1e7;
+  --pen-red: #b83b2f;
+  --ink-green: #2f6b4f;
+  --amber: #c9962a;
+  --amber-text: #8a6d1f;
+  --overlay: rgba(43, 38, 34, 0.4);
 
-  --danger: #e5484d;
-  --danger-soft: #fdebec;
-  --success: #2f9e6b;
-  --success-soft: #e3f5ea;
-  --warning: #e2b232;
-  --warning-soft: #fbf3d6;
-  --overlay: rgba(20, 20, 24, 0.4);
+  --rule-line: rgba(43, 38, 34, 0.07);
+  --paper-lines: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 31px,
+    var(--rule-line) 31px,
+    var(--rule-line) 32px
+  );
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-full: 9999px;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.16), 0 -1px 0 rgba(0, 0, 0, 0.04);
+  --shadow-sheet: 0 -8px 32px rgba(43, 38, 34, 0.18), 0 -1px 0 rgba(43, 38, 34, 0.06);
 
-  --font-sans:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  --font-sans: 'Golos Text', -apple-system, BlinkMacSystemFont, system-ui, 'Helvetica Neue', Arial, sans-serif;
+  --font-serif: 'Literata', Georgia, 'Times New Roman', serif;
 
   --dur-fast: 120ms;
   --dur-normal: 220ms;
@@ -40,54 +42,46 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0f0f11;
-    --surface: #1a1a1e;
-    --surface-raised: #26262c;
-    --text: #f2f2f5;
-    --text-muted: #9a9aa3;
-    --text-faint: #7a7a84;
-    --border: #2b2b32;
-    --border-strong: #3d3d46;
+    --bg: #1c1916;
+    --surface: #241f1b;
+    --surface-raised: #2e2823;
+    --text: #efe8dc;
+    --text-muted: #a89c8e;
+    --text-faint: #8a7f75;
+    --border: rgba(239, 232, 220, 0.16);
+    --border-strong: rgba(239, 232, 220, 0.32);
 
-    --accent: #6f93ff;
-    --accent-fg: #0f0f11;
-    --accent-soft: #1e2740;
-
-    --danger: #f2686c;
-    --danger-soft: #3a1f22;
-    --success: #4fbf87;
-    --success-soft: #1d3327;
-    --warning: #e8c353;
-    --warning-soft: #38311b;
+    --ink: #efe8dc;
+    --ink-fg: #1c1916;
+    --pen-red: #e0705f;
+    --ink-green: #6fb08e;
+    --amber: #d8a94a;
+    --amber-text: #d8a94a;
     --overlay: rgba(0, 0, 0, 0.6);
 
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(255, 255, 255, 0.06);
+    --rule-line: rgba(239, 232, 220, 0.06);
+    --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(239, 232, 220, 0.06);
   }
 }
 
 :root[data-theme='dark'] {
-  --bg: #0f0f11;
-  --surface: #1a1a1e;
-  --surface-raised: #26262c;
-  --text: #f2f2f5;
-  --text-muted: #9a9aa3;
-  --text-faint: #7a7a84;
-  --border: #2b2b32;
-  --border-strong: #3d3d46;
+  --bg: #1c1916;
+  --surface: #241f1b;
+  --surface-raised: #2e2823;
+  --text: #efe8dc;
+  --text-muted: #a89c8e;
+  --text-faint: #8a7f75;
+  --border: rgba(239, 232, 220, 0.16);
+  --border-strong: rgba(239, 232, 220, 0.32);
 
-  --accent: #6f93ff;
-  --accent-fg: #0f0f11;
-  --accent-soft: #1e2740;
-
-  --danger: #f2686c;
-  --danger-soft: #3a1f22;
-  --success: #4fbf87;
-  --success-soft: #1d3327;
-  --warning: #e8c353;
-  --warning-soft: #38311b;
+  --ink: #efe8dc;
+  --ink-fg: #1c1916;
+  --pen-red: #e0705f;
+  --ink-green: #6fb08e;
+  --amber: #d8a94a;
+  --amber-text: #d8a94a;
   --overlay: rgba(0, 0, 0, 0.6);
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(255, 255, 255, 0.06);
+  --rule-line: rgba(239, 232, 220, 0.06);
+  --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(239, 232, 220, 0.06);
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from './cn'
+import { CloseIcon } from './icons'
 
 export interface SheetProps {
   open: boolean
@@ -105,7 +106,7 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
           <span className="block h-1.5 w-10 rounded-full bg-border-strong" />
         </div>
         <div className="flex items-center justify-between gap-3 px-5 pt-2 pb-3 md:pt-5">
-          <h2 className="text-lg font-semibold text-text">{title}</h2>
+          <h2 className="font-serif text-xl font-semibold text-text">{title}</h2>
           <button
             type="button"
             aria-label="Закрыть"
@@ -113,9 +114,7 @@ export function Sheet({ open, onClose, title, children, footer }: SheetProps) {
             onClick={onClose}
             className="-mr-2 flex size-11 items-center justify-center rounded-full text-muted transition-colors duration-fast hover:bg-surface-raised active:bg-surface-raised"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
+            <CloseIcon size={20} />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto px-5 pb-4">{children}</div>

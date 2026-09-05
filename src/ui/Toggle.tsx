@@ -31,15 +31,15 @@ export function Toggle({ checked, onChange, label, id, disabled, className }: To
         onClick={() => onChange(!checked)}
         className={cn(
           'relative shrink-0 h-8 w-13 rounded-full p-0.5 transition-colors duration-normal ease-out',
-          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-          'disabled:opacity-50',
-          checked ? 'bg-accent' : 'bg-border-strong',
+          'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+          'disabled:opacity-40',
+          checked ? 'bg-ink' : 'bg-border-strong',
         )}
       >
         <span
           aria-hidden
           className={cn(
-            'block size-7 rounded-full bg-surface shadow-card transition-transform duration-normal ease-out',
+            'block size-7 rounded-full bg-bg transition-transform duration-normal ease-out',
             checked && 'translate-x-5',
           )}
         />

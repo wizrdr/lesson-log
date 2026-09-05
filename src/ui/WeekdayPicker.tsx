@@ -37,8 +37,8 @@ export function WeekdayPicker({ value, onChange, className }: WeekdayPickerProps
             className={cn(
               'size-11 rounded-full text-sm font-medium select-none',
               'transition-colors duration-fast ease-out',
-              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-              on ? 'bg-accent text-accent-fg' : 'bg-surface-raised text-muted hover:text-text',
+              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+              on ? 'bg-ink text-ink-fg' : 'border border-border-strong text-muted hover:text-text',
             )}
           >
             {WEEKDAY_LABELS[d]}

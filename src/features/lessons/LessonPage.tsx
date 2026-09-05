@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { listEntriesByLesson } from '@/api/entries'
 import { getLesson, requestTranscription, subscribeLessons, type LessonWithTutor } from '@/api/lessons'
-import type { Entry, EntryType, LessonStatus } from '@/api/types'
+import type { Entry, EntryType } from '@/api/types'
 import { Page } from '@/app/Page'
-import { Button, Card } from '@/ui'
-import { LANGUAGE_LABELS, formatLessonDate, pluralEntries } from './format'
-import { StatusBadge } from './StatusBadge'
+import { Button, HairlineBlock, HairlineList, ReviewIcon } from '@/ui'
+import { LANGUAGE_LABELS, formatLessonDate, pluralCards, pluralEntries } from './format'
+import { StatusLine } from './StatusLine'
 
 const GROUPS: { type: EntryType; title: string }[] = [
   { type: 'correction', title: 'Исправления' },
@@ -14,11 +14,7 @@ const GROUPS: { type: EntryType; title: string }[] = [
   { type: 'rule', title: 'Правила' },
 ]
 
-const STATUS_HINT: Record<Exclude<LessonStatus, 'ready' | 'failed'>, string> = {
-  uploaded: 'Файл загружен, расшифровка скоро начнётся.',
-  transcribing: 'Расшифровываем запись — обычно 2–5 минут.',
-  extracting: 'Ищем исправления в транскрипте — ещё минуту-две.',
-}
+const LONG_ORIGINAL = 60
 
 function errorText(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
@@ -26,6 +22,7 @@ function errorText(e: unknown): string {
 
 export function LessonPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [lesson, setLesson] = useState<LessonWithTutor | null>(null)
   const [entries, setEntries] = useState<Entry[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -63,114 +60,136 @@ export function LessonPage() {
     }
   }
 
+  const back = { to: '/', label: 'Уроки' }
+
   if (loadError && !lesson) {
     return (
-      <Page title="Урок">
-        <p className="text-sm text-danger">{loadError}</p>
-        <Link to="/" className="text-sm text-accent">
-          ← К списку уроков
-        </Link>
+      <Page title="Урок" back={back}>
+        <p className="px-6 pt-6 text-[13px] text-pen-red">{loadError}</p>
       </Page>
     )
   }
 
   if (!lesson) return <div className="h-24" aria-busy />
 
+  const ready = lesson.status === 'ready'
+  const tutorLine = lesson.tutor ? `${lesson.tutor.name} · ${LANGUAGE_LABELS[lesson.tutor.language]}` : 'Репетитор удалён'
   const groups = GROUPS.map((g) => ({ ...g, items: entries.filter((e) => e.type === g.type) })).filter(
     (g) => g.items.length > 0,
   )
 
   return (
-    <Page
-      title={formatLessonDate(lesson.date)}
-      subtitle={lesson.tutor ? `${lesson.tutor.name} · ${LANGUAGE_LABELS[lesson.tutor.language]}` : undefined}
-      action={
-        <Link to="/" className="text-sm text-accent">
-          Уроки
-        </Link>
-      }
-    >
-      <Card className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-sm font-medium text-muted">Статус</span>
-          <StatusBadge status={lesson.status} />
+    <Page title={formatLessonDate(lesson.date)} subtitle={ready ? `${tutorLine} · ${pluralEntries(entries.length)}` : tutorLine} back={back}>
+      {lesson.status !== 'ready' && (
+        <div className="flex flex-col items-start gap-4 px-6 pt-6">
+          <StatusLine status={lesson.status} error={lesson.error} className="text-[15px]" />
+          {lesson.status === 'failed' && (
+            <>
+              {retryError && <p className="text-[13px] text-pen-red">{retryError}</p>}
+              <Button variant="secondary" size="sm" loading={retrying} onClick={() => void retry()}>
+                Повторить расшифровку
+              </Button>
+            </>
+          )}
         </div>
-        {lesson.status === 'ready' && <p className="text-sm text-muted">{pluralEntries(entries.length)}</p>}
-        {lesson.status === 'failed' && (
-          <>
-            <p className="text-sm text-danger">{lesson.error ?? 'Неизвестная ошибка'}</p>
-            {retryError && <p className="text-sm text-danger">{retryError}</p>}
-            <Button variant="soft" size="sm" loading={retrying} onClick={() => void retry()}>
-              Повторить
-            </Button>
-          </>
-        )}
-        {lesson.status !== 'ready' && lesson.status !== 'failed' && (
-          <p className="text-sm text-muted">{STATUS_HINT[lesson.status]}</p>
-        )}
-        {loadError && <p className="text-sm text-danger">{loadError}</p>}
-      </Card>
-
-      {lesson.status === 'ready' && groups.length === 0 && (
-        <Card className="py-8 text-center">
-          <p className="text-muted">Исправлений не нашлось</p>
-        </Card>
       )}
 
+      {loadError && <p className="px-6 pt-6 text-[13px] text-pen-red">{loadError}</p>}
+
+      {ready && groups.length === 0 && <p className="px-6 pt-6 font-serif italic text-muted">Исправлений не нашлось</p>}
+
       {groups.map((g) => (
-        <section key={g.type} className="flex flex-col gap-2">
-          <h2 className="px-1 text-sm font-medium text-muted">
-            {g.title} <span className="text-faint">{g.items.length}</span>
-          </h2>
-          <Card padded={false}>
-            <ul className="divide-y divide-border">
+        <Section key={g.type} title={g.title} count={g.items.length}>
+          {g.type === 'vocab' ? (
+            <HairlineBlock className="grid grid-cols-2 gap-x-5 gap-y-2.5">
               {g.items.map((entry) => (
-                <EntryItem key={entry.id} entry={entry} />
+                <VocabItem key={entry.id} entry={entry} />
               ))}
-            </ul>
-          </Card>
-        </section>
+            </HairlineBlock>
+          ) : (
+            <HairlineList>
+              {g.items.map((entry) => (
+                <li key={entry.id} className="flex flex-col gap-1.5 py-3.5">
+                  {g.type === 'correction' ? <CorrectionText entry={entry} /> : <p className="font-serif text-[17px] leading-[1.35]">{entry.original}</p>}
+                  <EntryMeta entry={entry} />
+                </li>
+              ))}
+            </HairlineList>
+          )}
+        </Section>
       ))}
 
       {lesson.transcript && (
-        <details>
-          <summary className="cursor-pointer select-none px-1 text-sm font-medium text-muted">Транскрипт</summary>
-          <Card className="mt-2">
-            <p className="whitespace-pre-wrap text-sm text-muted">{lesson.transcript}</p>
-          </Card>
+        <details className="px-6 pt-6">
+          <summary className="cursor-pointer select-none text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">Транскрипт</summary>
+          <p className="whitespace-pre-wrap pt-3 font-serif text-[15px] leading-[1.5] text-muted">{lesson.transcript}</p>
         </details>
+      )}
+
+      {ready && entries.length > 0 && (
+        <div className="sticky bottom-0 px-6 pt-6 pb-2">
+          <Button size="lg" full onClick={() => navigate('/review')}>
+            <ReviewIcon size={20} />
+            Повторить {pluralCards(entries.length)}
+          </Button>
+        </div>
       )}
     </Page>
   )
 }
 
-function EntryItem({ entry }: { entry: Entry }) {
-  const isCorrection = entry.type === 'correction' && entry.corrected !== null
+function Section({ title, count, children }: { title: string; count: number; children: ReactNode }) {
   return (
-    <li className="flex flex-col gap-1 px-4 py-3">
-      <p className="text-text">
-        {isCorrection ? (
-          <>
-            <span className="text-muted line-through">{entry.original}</span>
-            <span aria-hidden className="text-faint">
-              {' → '}
-            </span>
-            <span className="font-medium">{entry.corrected}</span>
-          </>
-        ) : (
-          <>
-            <span className="font-medium">{entry.original}</span>
-            {entry.corrected && <span className="text-muted"> — {entry.corrected}</span>}
-          </>
-        )}
-      </p>
-      {entry.explanation && <p className="text-sm text-muted">{entry.explanation}</p>}
+    <section className="px-6 pt-6">
+      <h2 className="pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-faint">
+        {title} · {count}
+      </h2>
+      {children}
+    </section>
+  )
+}
+
+function CorrectionText({ entry }: { entry: Entry }) {
+  const original = <s className="text-pen-red decoration-[1.5px]">{entry.original}</s>
+  const corrected = entry.corrected && <strong className="font-semibold text-ink-green">{entry.corrected}</strong>
+  const stacked = entry.original.length > LONG_ORIGINAL
+  return (
+    <p className="font-serif text-lg leading-[1.35]">
+      {stacked ? (
+        <>
+          <span className="block">{original}</span>
+          {corrected && <span className="block">{corrected}</span>}
+        </>
+      ) : (
+        <>
+          {original}
+          {corrected && <> {corrected}</>}
+        </>
+      )}
+    </p>
+  )
+}
+
+function VocabItem({ entry }: { entry: Entry }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <span className="font-serif text-[17px] font-semibold leading-[1.3]">{entry.original}</span>
+      {entry.corrected && <span className="text-[13px] text-muted">{entry.corrected}</span>}
+      <EntryMeta entry={entry} />
+    </div>
+  )
+}
+
+function EntryMeta({ entry }: { entry: Entry }) {
+  return (
+    <>
+      {entry.explanation && <p className="text-[13px] text-muted">{entry.explanation}</p>}
       {entry.quote && (
-        <details className="text-sm">
-          <summary className="cursor-pointer select-none text-faint">Цитата из транскрипта</summary>
-          <blockquote className="mt-1 border-l-2 border-border pl-3 text-muted italic">{entry.quote}</blockquote>
+        <details className="text-[13px]">
+          <summary className="cursor-pointer select-none text-faint">Цитата</summary>
+          <blockquote className="mt-1 border-l-2 border-border pl-3 font-serif italic text-muted">{entry.quote}</blockquote>
         </details>
       )}
-    </li>
+    </>
   )
 }

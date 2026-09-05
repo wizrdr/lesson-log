@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Button, Card, Field, Input } from '@/ui'
+import { Button, Field, Input } from '@/ui'
 import { supabase } from '@/lib/supabase'
 
 type Mode = 'signin' | 'signup'
@@ -32,11 +32,11 @@ export function LoginScreen() {
   }
 
   return (
-    <main className="min-h-dvh bg-bg text-text flex items-center justify-center p-4">
-      <Card className="w-full max-w-sm flex flex-col gap-5">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">Lesson Log</h1>
-          <p className="text-sm text-muted">{mode === 'signin' ? 'Вход' : 'Первый вход: создание аккаунта'}</p>
+    <main className="paper flex min-h-dvh items-center justify-center p-6 text-text">
+      <div className="flex w-full max-w-sm flex-col gap-6">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="font-serif text-[34px] font-semibold leading-[1.05] tracking-[-0.01em]">Lesson Log</h1>
+          <p className="font-serif text-base italic text-muted">{mode === 'signin' ? 'Вход' : 'Первый вход: создание аккаунта'}</p>
         </div>
 
         <form onSubmit={submit} className="flex flex-col gap-4">
@@ -64,7 +64,7 @@ export function LoginScreen() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </Field>
-          {status.kind === 'error' && <p className="text-sm text-danger">{status.message}</p>}
+          {status.kind === 'error' && <p className="text-[13px] text-pen-red">{status.message}</p>}
           <Button type="submit" full loading={status.kind === 'busy'}>
             {mode === 'signin' ? 'Войти' : 'Создать аккаунт'}
           </Button>
@@ -80,7 +80,7 @@ export function LoginScreen() {
             {mode === 'signin' ? 'Первый раз здесь? Создать аккаунт' : 'Уже есть аккаунт? Войти'}
           </Button>
         </form>
-      </Card>
+      </div>
     </main>
   )
 }

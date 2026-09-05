@@ -20,8 +20,8 @@ export default defineConfig({
         name: 'Lesson Log',
         short_name: 'Lesson Log',
         description: 'Журнал ошибок и повторение после уроков с репетитором',
-        theme_color: '#0f0f11',
-        background_color: '#0f0f11',
+        theme_color: '#f6f1e7',
+        background_color: '#f6f1e7',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

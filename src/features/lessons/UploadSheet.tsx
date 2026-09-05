@@ -96,8 +96,8 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
       title="Загрузить урок"
       footer={
         <div className="flex flex-col gap-2">
-          {busy && <p className="text-center text-sm text-muted">{STAGE_TEXT[stage]}</p>}
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {busy && <p className="text-center text-[13px] text-muted">{STAGE_TEXT[stage]}</p>}
+          {error && <p className="text-[13px] text-pen-red">{error}</p>}
           <Button full disabled={!canSubmit} loading={busy} onClick={() => void submit()}>
             Загрузить
           </Button>
@@ -138,7 +138,7 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
         {needsConsent && (
           <div className="flex flex-col gap-1">
             <Toggle label="Репетитор предупреждён о записи" checked={consent} onChange={setConsent} />
-            <p className="text-sm text-muted">Без согласия репетитора урок записывать нельзя.</p>
+            <p className="text-[13px] text-muted">Без согласия репетитора урок записывать нельзя.</p>
           </div>
         )}
 
@@ -153,15 +153,15 @@ export function UploadSheet({ open, onClose, tutors, onTutorCreated }: UploadShe
             accept="audio/*,video/mp4,.m4a"
             disabled={busy}
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            className="block w-full text-sm text-muted file:mr-3 file:min-h-10 file:rounded-md file:border-0 file:bg-accent-soft file:px-3 file:font-medium file:text-accent"
+            className="block w-full text-sm text-muted file:mr-3 file:min-h-10 file:rounded-full file:border-[1.5px] file:border-solid file:border-ink file:bg-transparent file:px-4 file:font-semibold file:text-text"
           />
           {file && (
-            <p className="text-sm text-muted">
+            <p className="text-[13px] text-muted">
               {file.name} · {formatBytes(file.size)}
             </p>
           )}
           {tooBig && (
-            <p className="text-sm text-warning">
+            <p className="text-[13px] text-amber-text">
               Файл больше 50 МБ — это лимит Storage на бесплатном тарифе, загрузка может не пройти.
             </p>
           )}

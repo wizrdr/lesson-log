@@ -11,16 +11,12 @@
   --color-faint: var(--text-faint);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
-  --color-accent: var(--accent);
-  --color-accent-fg: var(--accent-fg);
-  --color-on-color: var(--on-color);
-  --color-accent-soft: var(--accent-soft);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
-  --color-success: var(--success);
-  --color-success-soft: var(--success-soft);
-  --color-warning: var(--warning);
-  --color-warning-soft: var(--warning-soft);
+  --color-ink: var(--ink);
+  --color-ink-fg: var(--ink-fg);
+  --color-pen-red: var(--pen-red);
+  --color-ink-green: var(--ink-green);
+  --color-amber: var(--amber);
+  --color-amber-text: var(--amber-text);
   --color-overlay: var(--overlay);
   --color-transparent: transparent;
   --color-current: currentColor;
@@ -32,14 +28,19 @@
   --radius-full: var(--radius-full);
 
   --shadow-*: initial;
-  --shadow-card: var(--shadow-card);
   --shadow-sheet: var(--shadow-sheet);
 
   --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
 
   --transition-duration-fast: var(--dur-fast);
   --transition-duration-normal: var(--dur-normal);
   --ease-out: var(--ease);
+}
+
+@utility paper {
+  background-color: var(--bg);
+  background-image: var(--paper-lines);
 }
 
 @layer base {
@@ -56,8 +57,8 @@
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: 16px;
-    line-height: 1.5;
+    font-size: 15px;
+    line-height: 1.45;
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

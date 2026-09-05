@@ -6,10 +6,10 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const inputBaseClass = cn(
-  'w-full min-w-0 bg-surface-raised text-text placeholder:text-faint rounded-md border px-3',
-  'transition-[border-color,box-shadow] duration-fast ease-out outline-none appearance-none',
-  'focus:border-accent focus:ring-2 focus:ring-accent/30',
-  'disabled:opacity-50',
+  'w-full min-w-0 bg-transparent text-text placeholder:text-faint rounded-md border px-3',
+  'transition-[border-color] duration-fast ease-out outline-none appearance-none',
+  'focus:border-ink',
+  'disabled:opacity-40',
 )
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
@@ -20,7 +20,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     <input
       ref={ref}
       aria-invalid={invalid || undefined}
-      className={cn(inputBaseClass, 'h-11', invalid ? 'border-danger' : 'border-border', className)}
+      className={cn(inputBaseClass, 'h-11', invalid ? 'border-pen-red' : 'border-border-strong', className)}
       {...rest}
     />
   )

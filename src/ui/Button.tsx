@@ -1,7 +1,7 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import { cn } from './cn'
 
-export type ButtonVariant = 'primary' | 'ghost' | 'danger' | 'soft'
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -12,16 +12,16 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClass: Record<ButtonVariant, string> = {
-  primary: 'bg-accent text-accent-fg hover:brightness-110 active:brightness-95',
-  ghost: 'bg-transparent text-text hover:bg-surface-raised active:bg-surface-raised',
-  danger: 'bg-danger-soft text-danger hover:brightness-95 active:brightness-90',
-  soft: 'bg-accent-soft text-accent hover:brightness-95 active:brightness-90',
+  primary: 'bg-ink text-ink-fg hover:opacity-90 active:opacity-80',
+  secondary: 'border-[1.5px] border-ink bg-transparent text-text hover:bg-surface-raised active:bg-surface-raised',
+  ghost: 'bg-transparent text-muted hover:text-text active:bg-surface-raised',
+  danger: 'border-[1.5px] border-pen-red bg-transparent text-pen-red hover:bg-surface-raised active:bg-surface-raised',
 }
 
 const sizeClass: Record<ButtonSize, string> = {
-  sm: 'min-h-9 px-3 text-sm gap-1.5',
-  md: 'min-h-11 px-4 text-base gap-2',
-  lg: 'min-h-13 px-5 text-lg gap-2',
+  sm: 'min-h-11 px-4 text-sm gap-2',
+  md: 'min-h-12 px-5 text-[15px] gap-2.5',
+  lg: 'min-h-13 px-6 text-[15px] gap-2.5',
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
@@ -35,10 +35,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        'relative inline-flex items-center justify-center rounded-md font-medium select-none',
-        'transition-[background-color,filter,opacity,transform] duration-fast ease-out',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-        'disabled:opacity-50 disabled:pointer-events-none',
+        'relative inline-flex items-center justify-center rounded-full font-semibold select-none',
+        'transition-[background-color,color,opacity] duration-fast ease-out',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+        'disabled:opacity-40 disabled:pointer-events-none',
         variantClass[variant],
         sizeClass[size],
         full && 'w-full',

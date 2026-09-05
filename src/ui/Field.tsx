@@ -12,10 +12,10 @@ export function Field({ label, hint, children, className }: FieldProps) {
   const hintId = useId()
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
-      <span className="text-sm font-medium text-muted">{label}</span>
+      <span className="text-[13px] font-medium text-muted">{label}</span>
       {children}
       {hint && (
-        <span id={hintId} className="text-sm text-muted">
+        <span id={hintId} className="text-[13px] text-muted">
           {hint}
         </span>
       )}

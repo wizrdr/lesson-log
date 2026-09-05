@@ -1,6 +1,6 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { client, currentUserId, functionErrorMessage, unwrap, check } from './client'
-import type { Lesson, Tutor } from './types'
+import type { EntryType, Lesson, Tutor } from './types'
 
 export type LessonTutor = Pick<Tutor, 'name' | 'language'>
 
@@ -8,25 +8,32 @@ export interface LessonWithTutor extends Lesson {
   tutor: LessonTutor | null
 }
 
+export type EntryCounts = Record<EntryType, number>
+
 export interface LessonListItem extends LessonWithTutor {
   entryCount: number
+  counts: EntryCounts
 }
 
 const WITH_TUTOR = '*, tutor:tutors(name, language)'
 
 interface ListRow extends LessonWithTutor {
-  entries: { count: number }[] | null
+  entries: { type: EntryType }[] | null
 }
 
 export async function listLessons(): Promise<LessonListItem[]> {
   const result = await client()
     .from('lessons')
-    .select(`${WITH_TUTOR}, entries(count)`)
+    .select(`${WITH_TUTOR}, entries(type)`)
     .is('entries.deleted_at', null)
     .order('date', { ascending: false })
     .order('created_at', { ascending: false })
   const rows = unwrap<ListRow[]>(result, 'Не удалось загрузить уроки')
-  return rows.map(({ entries, ...lesson }) => ({ ...lesson, entryCount: entries?.[0]?.count ?? 0 }))
+  return rows.map(({ entries, ...lesson }) => {
+    const counts: EntryCounts = { correction: 0, vocab: 0, rule: 0 }
+    for (const e of entries ?? []) counts[e.type] += 1
+    return { ...lesson, entryCount: entries?.length ?? 0, counts }
+  })
 }
 
 export async function getLesson(id: string): Promise<LessonWithTutor> {

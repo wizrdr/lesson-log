@@ -79,19 +79,21 @@ describe('LessonPage', () => {
     renderPage()
 
     expect(await screen.findByRole('heading', { name: '5 сентября' })).toBeInTheDocument()
-    expect(screen.getByText('Анна · польский')).toBeInTheDocument()
+    expect(await screen.findByText('Анна · польский · 4 записи')).toBeInTheDocument()
 
     const headings = (await screen.findAllByRole('heading', { level: 2 })).map((h) => h.textContent)
-    expect(headings).toEqual(['Исправления 2', 'Слова 1', 'Правила 1'])
+    expect(headings).toEqual(['Исправления · 2', 'Слова · 1', 'Правила · 1'])
 
     const corrections = screen.getByRole('heading', { name: /Исправления/ }).parentElement!
-    expect(corrections).toHaveTextContent('ja jest → ja jestem')
+    expect(corrections.querySelector('s')).toHaveTextContent('ja jest')
+    expect(corrections.querySelector('strong')).toHaveTextContent('ja jestem')
     expect(corrections).toHaveTextContent('dwie kobiety')
     expect(corrections).toHaveTextContent('спряжение być')
     expect(corrections).toHaveTextContent('ja jest… ja jestem')
     expect(corrections).not.toHaveTextContent('zeszyt')
 
-    expect(screen.getByText('4 записи')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Повторить 4 карточки' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Уроки' })).toHaveAttribute('href', '/')
     expect(screen.getByText('Транскрипт')).toBeInTheDocument()
     expect(screen.getByText('Dzień dobry, jak się masz?')).toBeInTheDocument()
     expect(listEntriesByLesson).toHaveBeenCalledWith('l1')
@@ -101,11 +103,10 @@ describe('LessonPage', () => {
     getLesson.mockResolvedValue(lesson({ status: 'failed', error: 'Deepgram: file too long' }))
     renderPage()
 
-    expect(await screen.findByText('Deepgram: file too long')).toBeInTheDocument()
-    expect(screen.getByText('ошибка')).toBeInTheDocument()
+    expect(await screen.findByText('Ошибка расшифровки: Deepgram: file too long')).toBeInTheDocument()
     expect(listEntriesByLesson).not.toHaveBeenCalled()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Повторить' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить расшифровку' }))
     await waitFor(() => expect(requestTranscription).toHaveBeenCalledWith('l1'))
   })
 
@@ -114,11 +115,22 @@ describe('LessonPage', () => {
     listEntriesByLesson.mockResolvedValue([entry({ id: 'e1', type: 'vocab', original: 'zeszyt' })])
     renderPage()
 
-    expect(await screen.findByText('Расшифровываем запись — обычно 2–5 минут.')).toBeInTheDocument()
+    expect(await screen.findByText('Разбор записи, обычно 2–5 минут')).toBeInTheDocument()
     expect(listEntriesByLesson).not.toHaveBeenCalled()
 
     emit!({ id: 'l1', status: 'ready' })
     expect(await screen.findByText('zeszyt')).toBeInTheDocument()
-    expect(screen.getByText('готово')).toBeInTheDocument()
+    expect(screen.queryByText('Разбор записи, обычно 2–5 минут')).toBeNull()
+    expect(screen.getByText('Анна · польский · 1 запись')).toBeInTheDocument()
+  })
+
+  it('stacks long originals on two lines instead of inline', async () => {
+    const long = 'Wczoraj wieczorem poszłem z kolegami do nowego sklepu na rogu ulicy i kupiłem chleb'
+    getLesson.mockResolvedValue(lesson({}))
+    listEntriesByLesson.mockResolvedValue([entry({ id: 'e1', type: 'correction', original: long, corrected: 'poszedłem' })])
+    renderPage()
+
+    const original = await screen.findByText(long)
+    expect(original.parentElement).toHaveClass('block')
   })
 })

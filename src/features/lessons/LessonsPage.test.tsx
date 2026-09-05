@@ -5,6 +5,8 @@ import type { Tutor } from '@/api/types'
 
 const listLessons = vi.fn()
 const listTutors = vi.fn()
+const countDueCards = vi.fn()
+const listRecurringCorrections = vi.fn()
 
 vi.mock('@/api/lessons', () => ({
   listLessons: () => listLessons(),
@@ -12,6 +14,8 @@ vi.mock('@/api/lessons', () => ({
   createLesson: vi.fn(),
   uploadAudio: vi.fn(),
 }))
+vi.mock('@/api/cards', () => ({ countDueCards: () => countDueCards() }))
+vi.mock('@/api/entries', () => ({ listRecurringCorrections: () => listRecurringCorrections() }))
 vi.mock('@/api/tutors', () => ({
   listTutors: () => listTutors(),
   createTutor: vi.fn(),
@@ -43,6 +47,7 @@ function lesson(over: Partial<LessonListItem>): LessonListItem {
     created_at: '2026-09-05T10:00:00Z',
     tutor: { name: 'Анна', language: 'pl' },
     entryCount: 0,
+    counts: { correction: 0, vocab: 0, rule: 0 },
   }
   return { ...base, ...over }
 }
@@ -60,28 +65,51 @@ describe('LessonsPage', () => {
   beforeEach(() => {
     listLessons.mockReset().mockResolvedValue([])
     listTutors.mockReset().mockResolvedValue([])
+    countDueCards.mockReset().mockResolvedValue(0)
+    listRecurringCorrections.mockReset().mockResolvedValue([])
   })
 
   it('shows the empty state when there are no lessons', async () => {
     renderPage()
-    expect(await screen.findByText('Уроков пока нет')).toBeInTheDocument()
+    expect(await screen.findByText(/Уроков пока нет/)).toBeInTheDocument()
+    expect(screen.queryByTestId('summary')).toBeNull()
   })
 
-  it('lists lessons with tutor, language and status badge including entry count', async () => {
+  it('lists lessons with tutor, language, entry breakdown and status line', async () => {
     listLessons.mockResolvedValue([
-      lesson({ id: 'l1', status: 'ready', entryCount: 3 }),
-      lesson({ id: 'l2', date: '2026-09-01', status: 'failed' }),
+      lesson({ id: 'l1', status: 'ready', entryCount: 12, counts: { correction: 7, vocab: 4, rule: 1 } }),
+      lesson({ id: 'l2', date: '2026-09-01', status: 'transcribing' }),
+      lesson({ id: 'l3', date: '2026-08-30', status: 'uploaded' }),
+      lesson({ id: 'l4', date: '2026-08-28', status: 'failed', error: 'Deepgram: file too long' }),
     ])
     renderPage()
-    expect(await screen.findByText('готово · 3 записи')).toBeInTheDocument()
-    expect(screen.getByText('ошибка')).toBeInTheDocument()
-    expect(screen.getAllByText('Анна · польский')).toHaveLength(2)
+    expect(await screen.findByText('12 записей · 7 исправлений, 4 слова, 1 правило')).toBeInTheDocument()
+    expect(screen.getByText('Разбор записи, обычно 2–5 минут')).toBeInTheDocument()
+    expect(screen.getByText('Загружено, ждёт расшифровки')).toBeInTheDocument()
+    expect(screen.getByText('Ошибка расшифровки: Deepgram: file too long')).toBeInTheDocument()
+    expect(screen.getAllByText('Анна · польский')).toHaveLength(4)
     expect(screen.getByRole('link', { name: /5 сентября/ })).toHaveAttribute('href', '/lessons/l1')
+  })
+
+  it('shows due cards and the recurring correction in the summary line', async () => {
+    countDueCards.mockResolvedValue(3)
+    listRecurringCorrections.mockResolvedValue([{ original: 'poszłem', corrected: 'poszedłem', lessonCount: 3 }])
+    renderPage()
+    const summary = await screen.findByTestId('summary')
+    expect(summary).toHaveTextContent('К повторению сегодня — 3 карточки. Повторяющаяся ошибка: poszłem poszedłem.')
+    expect(summary.querySelector('s')).toHaveTextContent('poszłem')
+    expect(summary.querySelector('strong')).toHaveTextContent('poszedłem')
+  })
+
+  it('shows only the due cards when nothing recurs', async () => {
+    countDueCards.mockResolvedValue(1)
+    renderPage()
+    expect(await screen.findByTestId('summary')).toHaveTextContent(/^К повторению сегодня — 1 карточка\.$/)
   })
 
   it('keeps the upload button disabled until the tutor consent toggle is on', async () => {
     renderPage()
-    await screen.findByText('Уроков пока нет')
+    await screen.findByText(/Уроков пока нет/)
     fireEvent.click(screen.getByRole('button', { name: 'Загрузить урок' }))
     expect(screen.getByRole('dialog', { name: 'Загрузить урок' })).toBeInTheDocument()
 
@@ -98,7 +126,7 @@ describe('LessonsPage', () => {
   it('does not ask for consent again for a tutor who already gave it', async () => {
     listTutors.mockResolvedValue([tutor])
     renderPage()
-    await screen.findByText('Уроков пока нет')
+    await screen.findByText(/Уроков пока нет/)
     fireEvent.click(screen.getByRole('button', { name: 'Загрузить урок' }))
     await waitFor(() => expect(screen.getByLabelText('Репетитор')).toHaveValue('t1'))
     expect(screen.queryByRole('switch')).toBeNull()
@@ -110,7 +138,7 @@ describe('LessonsPage', () => {
   it('warns about files over 50 MB without blocking the upload', async () => {
     listTutors.mockResolvedValue([tutor])
     renderPage()
-    await screen.findByText('Уроков пока нет')
+    await screen.findByText(/Уроков пока нет/)
     fireEvent.click(screen.getByRole('button', { name: 'Загрузить урок' }))
     await screen.findByLabelText('Репетитор')
 
