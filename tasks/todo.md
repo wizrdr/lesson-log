@@ -56,7 +56,7 @@
 
 ### S1 — каркас и пайплайн до первого журнала
 - [x] Scaffold из Dayline: Vite + tokens + ui + auth (email+пароль, как в Dayline) + PWA + Actions на GitHub Pages; `CLAUDE.md` репо с правилами (05.09; lint/test/build зелёные, 14 тестов; e2e и деплой не гонялись)
-- [~] Миграция `20260905000000_init.sql` написана (схема lesson_log, RLS, bucket audio, realtime). НЕ применена: `supabase link`/`db push`/management API заблокированы для агента — запускает Максим
+- [x] Миграции `20260905000000_init.sql` и `20260905000100_transcribe_meta.sql` применены в проект dayline (05.09, через `scripts/db-migrate.sh`, т.к. `db push` не работает при общей истории). Схема `lesson_log` открыта в PostgREST, redirect URL добавлен в Auth, репо github.com/wizrdr/lesson-log, Pages задеплоен: https://wizrdr.github.io/lesson-log/ — экран входа проверен в Playwright, запрос к Auth доходит
 - [x] Edge Functions `ll-transcribe` и `ll-extract` написаны, 23 Deno-теста зелёные, `deno check` чистый (05.09). НЕ задеплоены, секреты не заданы, реальный путь Deepgram → callback → Claude не гонялся
 - [x] Экраны: список уроков, шторка загрузки с репетитором и согласием, страница урока со статусом, ретраем и entries по типам; realtime (05.09; 26 vitest зелёных, build чистый; в браузере и на реальном Supabase НЕ проверено)
 - [ ] ПРОВЕРКА: Максим на задеплоенном сайте с iPhone грузит реальную запись → через несколько минут видит entries. Аудио в Storage удалено
@@ -96,10 +96,12 @@
 ## Ревью
 _(заполняется по закрытии спринтов: что сработало, что нет, что поменяли)_
 
-## Где остановились — 05.09.2026, вечер
+## Где остановились — 05.09.2026, ночь
 
-**Весь код S1 в git stage, не закоммичен.** lint 0 ошибок, vitest 26, Deno 23, build чистый. Ничего не проверено на реальном Supabase и в браузере.
+**Закоммичено и задеплоено:** https://wizrdr.github.io/lesson-log/ (вход работает до Supabase), схема `lesson_log` в проекте dayline, функции `ll-transcribe`/`ll-extract` задеплоены, `CALLBACK_TOKEN` задан.
 
-**Ждёт Максима (агенту заблокировано):** `supabase link` + `db push` (2 миграции), PATCH exposed schemas, `secrets set` (нужны ключи Deepgram и Anthropic), `functions deploy ll-transcribe ll-extract`, `gh repo create`, redirect URL в Auth, `.env` с `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` (те же, что у dayline).
+**Ждёт Максима:** ключи Deepgram и Anthropic → `npx supabase secrets set DEEPGRAM_API_KEY=… ANTHROPIC_API_KEY=…`; запись первого урока. Аккаунт: тот же, что в Dayline (проект общий); аккаунт жены — Dashboard → Auth → Invite user (регистрация выключена).
 
-**Следующая сессия:** после команд выше — Playwright-проверка входа и шторки локально (один dev-сервер), затем решающая проверка S1 с реальной записью. S0 параллельно, когда есть запись.
+**Решающая проверка S1 (не сделана):** войти на сайте с iPhone, загрузить реальную запись, дождаться entries, убедиться, что аудио удалено из Storage. До неё S1 не закрыт. Спайк S0 параллельно теми же ключами.
+
+**Урок дня:** `db push` в проекте с двумя репо не работает ни у кого; путь — `db query -f` + `migration repair` (`scripts/db-migrate.sh`). Правки настроек разрешений агент делать не может, это руками.
