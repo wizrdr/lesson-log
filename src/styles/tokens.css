@@ -1,6 +1,6 @@
 :root {
   --bg: #f6f1e7;
-  --surface: #f6f1e7;
+  --surface: #fffdf8;
   --surface-raised: #ece5d8;
   --text: #2b2622;
   --text-muted: #6b6058;
@@ -31,6 +31,7 @@
   --radius-full: 9999px;
 
   --shadow-sheet: 0 -8px 32px rgba(43, 38, 34, 0.18), 0 -1px 0 rgba(43, 38, 34, 0.06);
+  --shadow-card: 0 1px 0 rgba(43, 38, 34, 0.06), 0 8px 24px rgba(43, 38, 34, 0.08);
 
   --font-sans: 'Golos Text', -apple-system, BlinkMacSystemFont, system-ui, 'Helvetica Neue', Arial, sans-serif;
   --font-serif: 'Literata', Georgia, 'Times New Roman', serif;
@@ -43,7 +44,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --bg: #1c1916;
-    --surface: #241f1b;
+    --surface: #2a2420;
     --surface-raised: #2e2823;
     --text: #efe8dc;
     --text-muted: #a89c8e;
@@ -61,12 +62,13 @@
 
     --rule-line: rgba(239, 232, 220, 0.06);
     --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(239, 232, 220, 0.06);
+    --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
   }
 }
 
 :root[data-theme='dark'] {
   --bg: #1c1916;
-  --surface: #241f1b;
+  --surface: #2a2420;
   --surface-raised: #2e2823;
   --text: #efe8dc;
   --text-muted: #a89c8e;
@@ -84,4 +86,5 @@
 
   --rule-line: rgba(239, 232, 220, 0.06);
   --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6), 0 -1px 0 rgba(239, 232, 220, 0.06);
+  --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.45);
 }

@@ -3,13 +3,19 @@ import { deckStats, listDueCards, previewIntervals, reviewCard, Grades, type Dec
 import type { EntryType } from '@/api/types'
 import { Page } from '@/app/Page'
 import { useErrorText, useLocale, useT, type TextKey } from '@/i18n'
-import { Button, cn, type ButtonVariant } from '@/ui'
+import { Button, IndexCard, cn, type ButtonVariant } from '@/ui'
 import { formatLessonDate } from '@/features/lessons/format'
 
-const PROMPT: Record<EntryType, TextKey> = {
-  correction: 'review.promptCorrection',
-  vocab: 'review.promptVocab',
-  rule: 'review.promptRule',
+const HINT: Record<EntryType, TextKey> = {
+  correction: 'review.hintCorrection',
+  vocab: 'review.hintVocab',
+  rule: 'review.hintRule',
+}
+
+const TYPE: Record<EntryType, TextKey> = {
+  correction: 'type.correction',
+  vocab: 'type.vocab',
+  rule: 'type.rule',
 }
 
 const RATINGS: { grade: Grade; label: TextKey; variant: ButtonVariant }[] = [
@@ -20,6 +26,7 @@ const RATINGS: { grade: Grade; label: TextKey; variant: ButtonVariant }[] = [
 ]
 
 const KEY_TO_GRADE: Record<string, Grade> = { '1': Grades[0], '2': Grades[1], '3': Grades[2], '4': Grades[3] }
+const SKIP_KEYS = new Set(['s', 'ы'])
 
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
@@ -43,6 +50,22 @@ export function ReviewPage() {
   const current = queue?.[0] ?? null
   const intervals = useMemo(() => (current ? previewIntervals(current, t) : null), [current, t])
 
+  const progress =
+    current && queue
+      ? t('review.progress', {
+          i: reviewed + 1,
+          total: reviewed + queue.length,
+          fresh: t.plural('fresh', queue.filter((c) => c.state === 0).length),
+        })
+      : undefined
+
+  function skip() {
+    if (!current) return
+    setSaveError(null)
+    setFlipped(false)
+    setQueue((q) => (q && q.length > 1 ? [...q.slice(1), q[0]] : q))
+  }
+
   async function grade(g: Grade) {
     if (!current || !flipped) return
     setSaveError(null)
@@ -64,10 +87,14 @@ export function ReviewPage() {
   useEffect(() => {
     if (!current) return
     const onKey = (e: KeyboardEvent) => {
-      if (isTyping(e.target)) return
+      if (isTyping(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
       if (e.key === ' ') {
         e.preventDefault()
         setFlipped(true)
+        return
+      }
+      if (SKIP_KEYS.has(e.key.toLowerCase())) {
+        skip()
         return
       }
       const g = KEY_TO_GRADE[e.key]
@@ -78,7 +105,7 @@ export function ReviewPage() {
   })
 
   return (
-    <Page title={t('tabs.review')}>
+    <Page title={t('tabs.review')} subtitle={progress}>
       {stats && (
         <dl className="m-0 flex gap-6 px-6 pt-6" data-testid="deck-stats">
           <Stat label={t('review.due')} value={stats.due} />
@@ -92,20 +119,36 @@ export function ReviewPage() {
       {queue === null && loadError === null && <div className="h-24" aria-busy />}
 
       {queue && !current && (
-        <div className="px-6 pt-12 font-serif text-lg leading-6 italic text-muted">
-          <p>{t('review.done')}</p>
-          {reviewed > 0 && <p>{t('review.session', { cards: t.plural('cards', reviewed) })}</p>}
+        <div className="px-6 pt-8">
+          <IndexCard className="flex min-h-40 flex-col justify-center gap-1 font-serif text-lg leading-6 italic text-muted">
+            <p>{t('review.done')}</p>
+            {reviewed > 0 && <p>{t('review.session', { cards: t.plural('cards', reviewed) })}</p>}
+          </IndexCard>
         </div>
       )}
 
       {current && (
-        <div className="flex flex-col gap-5 pt-8">
+        <div className="flex flex-col gap-5 px-6 pt-8">
           <Card card={current} flipped={flipped} onFlip={() => setFlipped(true)} />
 
-          {saveError !== null && <p className="px-6 text-[13px] leading-5 text-pen-red">{errorText(saveError)}</p>}
+          {saveError !== null && <p className="text-[13px] leading-5 text-pen-red">{errorText(saveError)}</p>}
+
+          {!flipped && (
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-3">
+                <Button variant="secondary" onClick={skip}>
+                  {t('review.skip')}
+                </Button>
+                <Button variant="primary" className="flex-1" onClick={() => setFlipped(true)}>
+                  {t('review.showAnswer')}
+                </Button>
+              </div>
+              <p className="hidden text-center text-[12px] text-faint md:block">{t('review.keys')}</p>
+            </div>
+          )}
 
           {flipped && intervals && (
-            <div className="grid grid-cols-4 gap-2 px-6" data-testid="ratings">
+            <div className="grid grid-cols-4 gap-2" data-testid="ratings">
               {RATINGS.map(({ grade: g, label, variant }) => (
                 <div key={g} className="flex min-w-0 flex-col items-center gap-1.5">
                   <Button variant={variant} size="sm" full className="min-w-0" onClick={() => void grade(g)}>
@@ -137,32 +180,39 @@ function Card({ card, flipped, onFlip }: { card: DueCard; flipped: boolean; onFl
   const { entry } = card
   const textLang = entry.lang ?? entry.lesson?.tutor?.language
 
-  const face = (
-    <button
-      type="button"
-      onClick={onFlip}
-      aria-label={t('review.showAnswer')}
-      className="flex w-full flex-col items-start gap-3 px-6 py-8 text-left focus-ring-inset"
-    >
-      <span
-        lang={textLang}
-        className={cn(
-          'font-serif font-semibold leading-[1.25] tracking-[-0.01em] wrap-anywhere',
-          entry.type === 'vocab' ? 'text-[28px]' : 'text-[24px]',
-        )}
-      >
-        {entry.original}
-      </span>
-      <span className="font-serif text-base italic text-muted">{t(PROMPT[entry.type])}</span>
-    </button>
+  const meta = (
+    <span className="text-[11px] leading-4 font-semibold uppercase tracking-[0.12em] text-faint" data-testid="card-meta">
+      {[t(TYPE[entry.type]), textLang?.toUpperCase(), entry.lesson ? formatLessonDate(entry.lesson.date, lang) : t('review.manual')]
+        .filter(Boolean)
+        .join(' · ')}
+    </span>
   )
+
+  if (!flipped) {
+    return (
+      <IndexCard interactive onClick={onFlip} className="flex min-h-56 flex-col gap-6" data-testid="card-face">
+        {meta}
+        <span
+          lang={textLang}
+          className={cn(
+            'my-auto self-center text-center font-serif font-semibold leading-[1.25] tracking-[-0.01em] wrap-anywhere',
+            entry.type === 'vocab' ? 'text-[28px]' : 'text-[22px]',
+          )}
+        >
+          {entry.original}
+        </span>
+        <span className="text-center text-[13px] leading-5 text-muted">{t(HINT[entry.type])}</span>
+      </IndexCard>
+    )
+  }
 
   const lessonLine = entry.lesson
     ? [formatLessonDate(entry.lesson.date, lang), entry.lesson.tutor?.name].filter(Boolean).join(' · ')
     : t('review.manual')
 
-  const back = (
-    <div className="flex flex-col gap-3 px-6 py-8" data-testid="card-back">
+  return (
+    <IndexCard className="flex flex-col gap-3" data-testid="card-back">
+      {meta}
       {entry.type === 'correction' ? (
         <s lang={textLang} className="font-serif text-lg leading-6 text-pen-red decoration-[1.5px] wrap-anywhere">
           {entry.original}
@@ -185,8 +235,6 @@ function Card({ card, flipped, onFlip }: { card: DueCard; flipped: boolean; onFl
         </details>
       )}
       <p className="pt-1 text-[12px] text-faint">{lessonLine}</p>
-    </div>
+    </IndexCard>
   )
-
-  return <div className="border-y border-border bg-surface">{flipped ? back : face}</div>
 }

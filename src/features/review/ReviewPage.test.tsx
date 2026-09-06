@@ -42,7 +42,7 @@ function card(over: Partial<DueCard['entry']> & Pick<DueCard['entry'], 'id' | 't
 }
 
 const correction = card({ id: 'e1', type: 'correction', original: 'ja jest', corrected: 'ja jestem', explanation: 'спряжение być', quote: 'ja jest… ja jestem' })
-const vocab = card({ id: 'e2', type: 'vocab', original: 'zeszyt', corrected: 'тетрадь', lesson: null })
+const vocab = card({ id: 'e2', type: 'vocab', original: 'zeszyt', corrected: 'тетрадь', lesson: null }, 2)
 
 const renderPage = () =>
   render(
@@ -51,51 +51,113 @@ const renderPage = () =>
     </MemoryRouter>,
   )
 
+const showAnswer = () => screen.getByRole('button', { name: 'Показать ответ' })
+const skip = () => screen.getByRole('button', { name: 'Пропустить' })
+
 describe('ReviewPage', () => {
   beforeEach(() => {
     listDueCards.mockReset().mockResolvedValue([correction, vocab])
-    deckStats.mockReset().mockResolvedValue({ due: 2, new: 2, total: 7 })
+    deckStats.mockReset().mockResolvedValue({ due: 2, new: 1, total: 7 })
     reviewCard.mockReset().mockImplementation((c: DueCard) => Promise.resolve(c))
   })
 
-  it('shows the counters and the face of the first card; flip reveals the answer and the ratings', async () => {
+  it('shows the counters, the progress line and the face of the first card as an interactive index card', async () => {
     renderPage()
-    expect(await screen.findByTestId('deck-stats')).toHaveTextContent('К повторению2Новых2В колоде7')
-    expect(screen.getByText('ja jest')).toBeInTheDocument()
-    expect(screen.getByText('Как правильно?')).toBeInTheDocument()
+    expect(await screen.findByTestId('deck-stats')).toHaveTextContent('К повторению2Новых1В колоде7')
+    expect(screen.getByText('Карточка 1 из 2 · 1 новая')).toBeInTheDocument()
+
+    const face = screen.getByTestId('card-face')
+    expect(face.tagName).toBe('BUTTON')
+    expect(face).toHaveClass('bg-surface', 'border-border-strong', 'shadow-card', 'cursor-pointer')
+    expect(screen.getByTestId('card-meta')).toHaveTextContent('Исправление · PL · 5 сентября')
+    expect(face).toHaveTextContent('ja jest')
+    expect(face).toHaveTextContent('Как правильно? Нажми, чтобы проверить')
     expect(screen.queryByText('ja jestem')).toBeNull()
     expect(screen.queryByTestId('ratings')).toBeNull()
+    expect(skip()).toBeInTheDocument()
+    expect(showAnswer()).toBeInTheDocument()
+    expect(screen.getByText('Пробел — открыть · 1–4 — оценка · S — пропустить')).toHaveClass('hidden', 'md:block')
+  })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
+  it('clicking the card reveals the answer inside a non-interactive index card with the ratings below', async () => {
+    renderPage()
+    fireEvent.click(await screen.findByTestId('card-face'))
+
     const back = screen.getByTestId('card-back')
+    expect(back.tagName).toBe('DIV')
+    expect(back).toHaveClass('bg-surface', 'border-border-strong')
+    expect(back).not.toHaveClass('cursor-pointer')
+    expect(screen.getByTestId('card-meta')).toHaveTextContent('Исправление · PL · 5 сентября')
     expect(back.querySelector('s')).toHaveTextContent('ja jest')
     expect(back.querySelector('strong')).toHaveTextContent('ja jestem')
     expect(back).toHaveTextContent('спряжение być')
     expect(back).toHaveTextContent('ja jest… ja jestem')
     expect(back).toHaveTextContent('5 сентября · Анна')
+    expect(screen.queryByRole('button', { name: 'Показать ответ' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Пропустить' })).toBeNull()
 
     const ratings = screen.getByTestId('ratings')
     expect(ratings.querySelectorAll('button')).toHaveLength(4)
     expect(ratings).toHaveTextContent('Снова1 минТрудно6 минХорошо10 минЛегко8 д')
   })
 
-  it('rating Good saves the review and moves to the next card, then finishes the session', async () => {
+  it('the Show answer button reveals the answer too', async () => {
+    renderPage()
+    fireEvent.click(await screen.findByRole('button', { name: 'Показать ответ' }))
+    expect(screen.getByTestId('card-back')).toHaveTextContent('ja jestem')
+  })
+
+  it('rating Good saves the review and moves to the next card, then finishes the session inside an index card', async () => {
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: 'Показать ответ' }))
     fireEvent.click(screen.getByRole('button', { name: 'Хорошо' }))
 
     expect(reviewCard).toHaveBeenCalledWith(correction, 3)
-    expect(screen.getByText('zeszyt')).toBeInTheDocument()
-    expect(screen.getByText('Перевод?')).toBeInTheDocument()
-    expect(screen.getByTestId('deck-stats')).toHaveTextContent('К повторению1Новых1В колоде7')
+    expect(screen.getByText('zeszyt')).toHaveClass('text-[28px]')
+    expect(screen.getByText('Вспомни перевод и нажми, чтобы открыть')).toBeInTheDocument()
+    expect(screen.getByTestId('card-meta')).toHaveTextContent('Слово · Моя карточка')
+    expect(screen.getByText('Карточка 2 из 2 · 0 новых')).toBeInTheDocument()
+    expect(screen.getByTestId('deck-stats')).toHaveTextContent('К повторению1Новых0В колоде7')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Показать ответ' }))
-    expect(screen.getByTestId('card-back')).toHaveTextContent('Моя карточка')
+    fireEvent.click(showAnswer())
     fireEvent.click(screen.getByRole('button', { name: 'Легко' }))
     expect(reviewCard).toHaveBeenCalledWith(vocab, 4)
-    expect(screen.getByText('На сегодня всё.')).toBeInTheDocument()
-    expect(screen.getByText('Повторено за сессию — 2 карточки.')).toBeInTheDocument()
+    expect(screen.queryByText(/Карточка \d из/)).toBeNull()
+    const done = screen.getByText('На сегодня всё.').parentElement!
+    expect(done).toHaveClass('bg-surface', 'border-border-strong')
+    expect(done).not.toHaveClass('cursor-pointer')
+    expect(done).toHaveTextContent('Повторено за сессию — 2 карточки.')
     expect(screen.getByTestId('deck-stats')).toHaveTextContent('К повторению0Новых0В колоде7')
+  })
+
+  it('Skip moves the card to the end of the queue without rating it; the progress stays put', async () => {
+    renderPage()
+    await screen.findByText('ja jest')
+    fireEvent.click(skip())
+
+    expect(reviewCard).not.toHaveBeenCalled()
+    expect(screen.getByText('zeszyt')).toBeInTheDocument()
+    expect(screen.queryByText('ja jest')).toBeNull()
+    expect(screen.getByText('Карточка 1 из 2 · 1 новая')).toBeInTheDocument()
+    expect(screen.getByTestId('deck-stats')).toHaveTextContent('К повторению2Новых1В колоде7')
+
+    fireEvent.click(skip())
+    expect(screen.getByText('ja jest')).toBeInTheDocument()
+    expect(reviewCard).not.toHaveBeenCalled()
+  })
+
+  it('the S key skips on both the face and the answer', async () => {
+    renderPage()
+    await screen.findByText('ja jest')
+    fireEvent.keyDown(window, { key: 's' })
+    expect(screen.getByText('zeszyt')).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: ' ' })
+    expect(screen.getByTestId('card-back')).toHaveTextContent('тетрадь')
+    fireEvent.keyDown(window, { key: 'S' })
+    expect(screen.getByText('ja jest')).toBeInTheDocument()
+    expect(screen.getByTestId('card-face')).toBeInTheDocument()
+    expect(reviewCard).not.toHaveBeenCalled()
   })
 
   it('shows the empty state without a session counter when nothing is due', async () => {
@@ -123,7 +185,7 @@ describe('ReviewPage', () => {
     expect(reviewCard).toHaveBeenCalledWith(vocab, 2)
   })
 
-  it('keeps the card and shows the error when saving the review fails', async () => {
+  it('keeps the card and shows the error under it when saving the review fails', async () => {
     reviewCard.mockRejectedValue(new ApiError('saveReview', 'network down'))
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: 'Показать ответ' }))
@@ -131,6 +193,7 @@ describe('ReviewPage', () => {
 
     expect(await screen.findByText('Не удалось сохранить оценку: network down')).toBeInTheDocument()
     expect(screen.getByTestId('card-back')).toHaveTextContent('ja jestem')
+    expect(screen.getByText('Карточка 1 из 2 · 1 новая')).toBeInTheDocument()
     expect(screen.getByTestId('deck-stats')).toHaveTextContent('К повторению2')
     expect(screen.queryByText('zeszyt')).toBeNull()
   })

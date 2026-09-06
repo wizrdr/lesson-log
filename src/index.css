@@ -30,6 +30,7 @@
 
   --shadow-*: initial;
   --shadow-sheet: var(--shadow-sheet);
+  --shadow-card: var(--shadow-card);
 
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
