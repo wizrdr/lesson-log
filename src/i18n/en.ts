@@ -129,6 +129,9 @@ export const en: Dictionary = {
   'apiKeys.howTo': 'How to use',
   'apiKeys.howToText': 'POST with an Authorization: Bearer <key> header. Up to 100 cards per request; cards with the same type and text are skipped.',
 
+  'deck.inDeck': 'In deck',
+  'deck.addShort': 'Add to deck',
+  'journal.subtitle': 'Everything in the deck comes up for review',
   'deck.add': 'Add to deck',
   'deck.remove': 'Remove from deck',
 

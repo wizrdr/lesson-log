@@ -96,7 +96,7 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
       inDeck={entry.card !== null}
       onChange={(inDeck) => setInDeck(entry.id, inDeck)}
       onError={setDeckError}
-      className="-my-2.5 shrink-0"
+      className="-my-1"
     />
   )
 

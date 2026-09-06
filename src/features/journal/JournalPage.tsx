@@ -93,6 +93,7 @@ export function JournalPage() {
   return (
     <Page
       title={t('tabs.journal')}
+      subtitle={t('journal.subtitle')}
       action={
         <div className="flex items-center gap-1">
           <IconButton label={t('apiKeys.open')} onClick={() => setKeysOpen(true)}>
@@ -143,7 +144,7 @@ export function JournalPage() {
                   inDeck={entry.inDeck}
                   onChange={(inDeck) => patch(entry.id, { inDeck })}
                   onError={setError}
-                  className="-my-2.5 shrink-0"
+                  className="-my-1"
                 />
               </li>
             ))}

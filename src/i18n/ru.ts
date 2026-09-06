@@ -129,6 +129,9 @@ export const ru = {
   'apiKeys.howTo': 'Как пользоваться',
   'apiKeys.howToText': 'POST с заголовком Authorization: Bearer <ключ>. До 100 карточек за запрос; карточки с тем же типом и текстом пропускаются.',
 
+  'deck.inDeck': 'В колоде',
+  'deck.addShort': 'В колоду',
+  'journal.subtitle': 'Всё, что в колоде, приходит на повторение',
   'deck.add': 'В колоду',
   'deck.remove': 'Убрать из колоды',
 
