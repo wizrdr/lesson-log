@@ -5,7 +5,8 @@ import { Page } from '@/app/Page'
 import { formatLessonDate } from '@/features/lessons/format'
 import { DeckToggle } from '@/features/review/DeckToggle'
 import { useErrorText, useLocale, useT, type Lang, type TextKey } from '@/i18n'
-import { Button, HairlineList, Input, PlusIcon, Segmented } from '@/ui'
+import { Button, HairlineList, IconButton, Input, KeyIcon, PlusIcon, Segmented } from '@/ui'
+import { ApiKeysSheet } from './ApiKeysSheet'
 import { EntrySheet } from './EntrySheet'
 
 const ALL = 'all'
@@ -53,6 +54,7 @@ export function JournalPage() {
   const [editing, setEditing] = useState<Entry | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [sheetKey, setSheetKey] = useState(0)
+  const [keysOpen, setKeysOpen] = useState(false)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setQuery(search.trim()), SEARCH_DEBOUNCE_MS)
@@ -92,11 +94,16 @@ export function JournalPage() {
     <Page
       title={t('tabs.journal')}
       action={
-        <Button variant="secondary" size="sm" aria-label={t('journal.add')} onClick={() => openSheet(null)}>
-          <PlusIcon size={18} />
-          <span className="sm:hidden">{t('journal.addShort')}</span>
-          <span className="hidden sm:inline">{t('journal.add')}</span>
-        </Button>
+        <div className="flex items-center gap-1">
+          <IconButton label={t('apiKeys.open')} onClick={() => setKeysOpen(true)}>
+            <KeyIcon />
+          </IconButton>
+          <Button variant="secondary" size="sm" aria-label={t('journal.add')} onClick={() => openSheet(null)}>
+            <PlusIcon size={18} />
+            <span className="sm:hidden">{t('journal.addShort')}</span>
+            <span className="hidden sm:inline">{t('journal.add')}</span>
+          </Button>
+        </div>
       }
     >
       <div className="flex flex-col gap-3 px-6 pt-6">
@@ -153,12 +160,13 @@ export function JournalPage() {
         onUpdated={(entry) => patch(entry.id, entry)}
         onDeleted={(id) => setEntries((list) => list?.filter((e) => e.id !== id) ?? list)}
       />
+      <ApiKeysSheet open={keysOpen} onClose={() => setKeysOpen(false)} />
     </Page>
   )
 }
 
 function EntryRow({ entry }: { entry: JournalEntry }) {
-  const lang = entry.lesson?.tutor?.language === 'pl' ? 'pl' : undefined
+  const lang = entry.lang ?? entry.lesson?.tutor?.language
   return (
     <span className="flex flex-col gap-1">
       <span lang={lang} className="font-serif text-lg leading-6 wrap-anywhere">

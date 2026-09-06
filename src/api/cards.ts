@@ -14,6 +14,7 @@ export interface DueCardEntry {
   corrected: string | null
   explanation: string | null
   quote: string | null
+  lang: TutorLanguage | null
   lesson: { date: string; tutor: { name: string; language: TutorLanguage } | null } | null
 }
 
@@ -28,7 +29,7 @@ export interface DeckStats {
 }
 
 const DUE_SELECT =
-  '*, entry:entries!inner(id, type, original, corrected, explanation, quote, deleted_at, lesson:lessons(date, tutor:tutors(name, language)))'
+  '*, entry:entries!inner(id, type, original, corrected, explanation, quote, lang, deleted_at, lesson:lessons(date, tutor:tutors(name, language)))'
 
 interface DueRow extends CardRow {
   entry: Omit<DueCardEntry, 'lesson'> & { deleted_at: string | null; lesson: DueCardEntry['lesson'] | DueCardEntry['lesson'][] }

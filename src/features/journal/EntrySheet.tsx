@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { createManualEntry, softDeleteEntry, updateEntry, type EntryInput, type JournalEntry } from '@/api/entries'
-import type { Entry, EntryType } from '@/api/types'
+import type { Entry, EntryType, TutorLanguage } from '@/api/types'
 import { useErrorText, useT } from '@/i18n'
 import { Button, Field, Segmented, Sheet, Textarea } from '@/ui'
 
 const TYPES: EntryType[] = ['correction', 'vocab', 'rule']
+const NO_LANG = 'none'
+const LANGS: (TutorLanguage | typeof NO_LANG)[] = ['pl', 'en', NO_LANG]
 
 export interface EntrySheetProps {
   open: boolean
@@ -22,6 +24,7 @@ export function EntrySheet({ open, entry, onClose, onCreated, onUpdated, onDelet
   const [original, setOriginal] = useState(entry?.original ?? '')
   const [corrected, setCorrected] = useState(entry?.corrected ?? '')
   const [explanation, setExplanation] = useState(entry?.explanation ?? '')
+  const [lang, setLang] = useState<TutorLanguage | typeof NO_LANG>(entry?.lang ?? NO_LANG)
   const [busy, setBusy] = useState<'save' | 'delete' | null>(null)
   const [error, setError] = useState<unknown>(null)
 
@@ -30,7 +33,7 @@ export function EntrySheet({ open, entry, onClose, onCreated, onUpdated, onDelet
 
   async function submit() {
     if (!canSubmit) return
-    const input: EntryInput = { type, original, corrected, explanation }
+    const input: EntryInput = { type, original, corrected, explanation, lang: lang === NO_LANG ? null : lang }
     setBusy('save')
     setError(null)
     try {
@@ -94,6 +97,13 @@ export function EntrySheet({ open, entry, onClose, onCreated, onUpdated, onDelet
         </Field>
         <Field label={t('entry.explanation')} hint={t('entry.explanationHint')}>
           <Textarea aria-label={t('entry.explanation')} rows={2} value={explanation} onChange={(e) => setExplanation(e.target.value)} />
+        </Field>
+        <Field label={t('entry.lang')} hint={t('entry.explanationHint')}>
+          <Segmented
+            options={LANGS.map((value) => ({ value, label: value === NO_LANG ? t('entry.langNone') : value.toUpperCase() }))}
+            value={lang}
+            onChange={(v) => setLang(v as TutorLanguage | typeof NO_LANG)}
+          />
         </Field>
       </div>
     </Sheet>

@@ -25,6 +25,7 @@ const base = {
   corrected: null,
   explanation: null,
   quote: null,
+  lang: null,
   created_at: '2026-09-05T10:00:00Z',
   deleted_at: null,
 }
@@ -147,17 +148,17 @@ describe('createManualEntry', () => {
   it('inserts the entry without a lesson and a card row right after', async () => {
     const created = { ...base, id: 'e9', lesson_id: null, original: 'kot', corrected: 'кот' }
     state().results.push({ data: created }, { error: null })
-    const entry = await createManualEntry({ type: 'vocab', original: ' kot ', corrected: ' кот ', explanation: '  ' })
+    const entry = await createManualEntry({ type: 'vocab', original: ' kot ', corrected: ' кот ', explanation: '  ', lang: 'pl' })
     expect(entry).toEqual({ ...created, inDeck: true, lesson: null })
 
     expect(state().calls.map((c) => c.table)).toEqual(['entries', 'cards'])
-    expect(state().ops(0).insert).toEqual([{ type: 'vocab', original: 'kot', corrected: 'кот', explanation: null, lesson_id: null }])
+    expect(state().ops(0).insert).toEqual([{ type: 'vocab', original: 'kot', corrected: 'кот', explanation: null, lang: 'pl', lesson_id: null }])
     expect(state().ops(1).insert).toEqual([{ entry_id: 'e9' }])
   })
 
   it('does not create a card when the entry insert fails', async () => {
     state().results.push({ data: null, error: { message: 'check violation' } })
-    await expect(createManualEntry({ type: 'rule', original: 'x', corrected: null, explanation: null })).rejects.toMatchObject({ code: 'saveEntry' })
+    await expect(createManualEntry({ type: 'rule', original: 'x', corrected: null, explanation: null, lang: null })).rejects.toMatchObject({ code: 'saveEntry' })
     expect(state().calls).toHaveLength(1)
   })
 })
@@ -166,9 +167,9 @@ describe('updateEntry / softDeleteEntry', () => {
   it('updateEntry patches the trimmed fields by id', async () => {
     const updated = { ...base, id: 'e1', lesson_id: 'l1', original: 'a', corrected: 'b' }
     state().results.push({ data: updated })
-    await expect(updateEntry('e1', { type: 'correction', original: 'a ', corrected: 'b', explanation: '' })).resolves.toEqual(updated)
+    await expect(updateEntry('e1', { type: 'correction', original: 'a ', corrected: 'b', explanation: '', lang: null })).resolves.toEqual(updated)
     const ops = state().ops(0)
-    expect(ops.update).toEqual([{ type: 'correction', original: 'a', corrected: 'b', explanation: null }])
+    expect(ops.update).toEqual([{ type: 'correction', original: 'a', corrected: 'b', explanation: null, lang: null }])
     expect(ops.eq).toEqual(['id', 'e1'])
   })
 

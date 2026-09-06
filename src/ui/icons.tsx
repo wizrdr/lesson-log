@@ -125,3 +125,13 @@ export function GlobeIcon(props: IconProps) {
     </Icon>
   )
 }
+
+export function KeyIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <circle cx="7.5" cy="15.5" r="3.5" />
+      <path d="M10 13L20 3" />
+      <path d="M15 8l2.5 2.5M18 5l2.5 2.5" />
+    </Icon>
+  )
+}

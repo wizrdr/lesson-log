@@ -142,11 +142,12 @@ describe('listDueCards', () => {
             corrected: 'тетрадь',
             explanation: null,
             quote: null,
+            lang: null,
             deleted_at: null,
             lesson: [{ date: '2026-09-05', tutor: { name: 'Анна', language: 'pl' } }],
           },
         },
-        { ...card({ entry_id: 'e2' }), entry: { id: 'e2', type: 'rule', original: 'r', corrected: null, explanation: null, quote: null, deleted_at: null, lesson: null } },
+        { ...card({ entry_id: 'e2' }), entry: { id: 'e2', type: 'rule', original: 'r', corrected: null, explanation: null, quote: null, lang: null, deleted_at: null, lesson: null } },
       ],
     })
     const cards = await listDueCards(10)
@@ -163,6 +164,7 @@ describe('listDueCards', () => {
       corrected: 'тетрадь',
       explanation: null,
       quote: null,
+      lang: null,
       lesson: { date: '2026-09-05', tutor: { name: 'Анна', language: 'pl' } },
     })
     expect(cards[1].entry.lesson).toBeNull()

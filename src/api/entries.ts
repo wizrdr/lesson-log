@@ -70,6 +70,7 @@ export interface EntryInput {
   original: string
   corrected: string | null
   explanation: string | null
+  lang: TutorLanguage | null
 }
 
 function clean(input: EntryInput): EntryInput {
@@ -78,6 +79,7 @@ function clean(input: EntryInput): EntryInput {
     original: input.original.trim(),
     corrected: input.corrected?.trim() || null,
     explanation: input.explanation?.trim() || null,
+    lang: input.lang,
   }
 }
 

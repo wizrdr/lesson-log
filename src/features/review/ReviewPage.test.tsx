@@ -34,6 +34,7 @@ function card(over: Partial<DueCard['entry']> & Pick<DueCard['entry'], 'id' | 't
       corrected: null,
       explanation: null,
       quote: null,
+      lang: null,
       lesson: { date: '2026-09-05', tutor: { name: 'Анна', language: 'pl' } },
       ...over,
     },

@@ -135,7 +135,7 @@ function Card({ card, flipped, onFlip }: { card: DueCard; flipped: boolean; onFl
   const t = useT()
   const { lang } = useLocale()
   const { entry } = card
-  const textLang = entry.lesson?.tutor?.language === 'pl' ? 'pl' : undefined
+  const textLang = entry.lang ?? entry.lesson?.tutor?.language
 
   const face = (
     <button

@@ -29,6 +29,7 @@ function entry(over: Partial<JournalEntry> & Pick<JournalEntry, 'id' | 'type' | 
     corrected: null,
     explanation: null,
     quote: null,
+    lang: null,
     created_at: '2026-09-05T10:00:00Z',
     deleted_at: null,
     inDeck: true,
@@ -131,7 +132,7 @@ describe('JournalPage', () => {
     expect(submit).toBeEnabled()
     fireEvent.click(submit)
 
-    await waitFor(() => expect(createManualEntry).toHaveBeenCalledWith({ type: 'vocab', original: 'pies', corrected: 'собака', explanation: 'zwierzę' }))
+    await waitFor(() => expect(createManualEntry).toHaveBeenCalledWith({ type: 'vocab', original: 'pies', corrected: 'собака', explanation: 'zwierzę', lang: null }))
     await waitFor(() => expect(screen.getByRole('region', { name: 'Мои карточки' })).toHaveTextContent('pies — собака'))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
@@ -146,7 +147,7 @@ describe('JournalPage', () => {
     updateEntry.mockResolvedValue({ ...rows[0], corrected: 'ja jestem!' })
     fireEvent.change(within(dialog).getByLabelText('Перевод / как правильно'), { target: { value: 'ja jestem!' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Сохранить' }))
-    await waitFor(() => expect(updateEntry).toHaveBeenCalledWith('e1', { type: 'correction', original: 'ja jest', corrected: 'ja jestem!', explanation: '' }))
+    await waitFor(() => expect(updateEntry).toHaveBeenCalledWith('e1', { type: 'correction', original: 'ja jest', corrected: 'ja jestem!', explanation: '', lang: null }))
     expect(await screen.findByText('ja jestem!')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /kot/ }))

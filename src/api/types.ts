@@ -33,6 +33,7 @@ export interface Entry {
   corrected: string | null
   explanation: string | null
   quote: string | null
+  lang: TutorLanguage | null
   created_at: string
   deleted_at: string | null
 }
@@ -50,4 +51,15 @@ export interface CardRow {
   lapses: number
   state: 0 | 1 | 2 | 3
   last_review: string | null
+}
+
+export interface ApiKey {
+  id: string
+  user_id: string
+  label: string
+  key_hash: string
+  key_prefix: string
+  created_at: string
+  last_used_at: string | null
+  revoked_at: string | null
 }

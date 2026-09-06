@@ -89,7 +89,7 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
   )
   const now = new Date().toISOString()
   const dueCount = entries.filter((e) => e.card !== null && e.card.due <= now).length
-  const textLang = lesson.tutor?.language === 'pl' ? 'pl' : undefined
+  const textLang = lesson.tutor?.language
   const toggle = (entry: LessonEntry) => (
     <DeckToggle
       entryId={entry.id}
@@ -146,7 +146,7 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
             {g.type === 'vocab' ? (
               <HairlineBlock className="grid grid-cols-1 gap-x-5 gap-y-6 pl-6 pr-3 sm:grid-cols-2">
                 {g.items.map((entry) => (
-                  <VocabItem key={entry.id} entry={entry} lang={textLang} toggle={toggle(entry)} />
+                  <VocabItem key={entry.id} entry={entry} lang={entry.lang ?? textLang} toggle={toggle(entry)} />
                 ))}
               </HairlineBlock>
             ) : (
@@ -155,9 +155,9 @@ export function LessonPage({ embedded = false }: LessonPageProps) {
                   <li key={entry.id} className="flex items-start gap-2 pl-6 pr-3 py-3">
                     <div className="flex min-w-0 flex-1 flex-col gap-1">
                       {g.type === 'correction' ? (
-                        <CorrectionText entry={entry} lang={textLang} />
+                        <CorrectionText entry={entry} lang={entry.lang ?? textLang} />
                       ) : (
-                        <p lang={textLang} className="font-serif text-lg leading-6 wrap-anywhere">
+                        <p lang={entry.lang ?? textLang} className="font-serif text-lg leading-6 wrap-anywhere">
                           {entry.original}
                         </p>
                       )}

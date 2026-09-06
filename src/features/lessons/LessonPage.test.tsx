@@ -55,6 +55,7 @@ function entry(over: Partial<LessonEntry> & Pick<LessonEntry, 'id' | 'type' | 'o
     corrected: null,
     explanation: null,
     quote: null,
+    lang: null,
     created_at: '2026-09-05T10:05:00Z',
     deleted_at: null,
     card: DUE,
