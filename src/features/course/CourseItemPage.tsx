@@ -4,6 +4,7 @@ import type { DrillItem } from '../../../supabase/functions/_shared/course-input
 import { getCourseItem, importCards, loadProgress, saveProgress, type BlockState, type CourseItem, type ProgressMap } from '@/api/course'
 import { Page } from '@/app/Page'
 import { useErrorText, useT } from '@/i18n'
+import { cn } from '@/ui'
 import { Drill } from './blocks/Drill'
 import { Checklist, Quiz, Recall } from './blocks/Interactive'
 import { Callout, Dialog, Heading, Table, Text } from './blocks/Simple'
@@ -14,9 +15,10 @@ export const CARDS_MARKER = '_cards'
 export interface CourseItemPageProps {
   embedded?: boolean
   action?: ReactNode
+  centered?: boolean
 }
 
-export function CourseItemPage({ embedded = false, action }: CourseItemPageProps) {
+export function CourseItemPage({ embedded = false, action, centered = false }: CourseItemPageProps) {
   const { slug = '' } = useParams()
   const t = useT()
   const errorText = useErrorText()
@@ -85,11 +87,12 @@ export function CourseItemPage({ embedded = false, action }: CourseItemPageProps
     <Page
       title={item.title}
       subtitle={item.subtitle ?? undefined}
-      width={embedded ? 'list' : 'lesson'}
+      width={embedded || centered ? 'list' : 'lesson'}
+      className={centered ? 'mx-auto max-w-[860px]' : undefined}
       back={embedded ? undefined : { to: '/course', label: t('course.title') }}
       action={action}
     >
-      <div className="max-w-[720px] pb-10" data-testid="course-item">
+      <div className={cn('pb-10', !centered && 'max-w-[720px]')} data-testid="course-item">
         {item.body.map((block) => {
           const state = progress[block.id]
           const onChange = (s: BlockState) => update(block.id, s)

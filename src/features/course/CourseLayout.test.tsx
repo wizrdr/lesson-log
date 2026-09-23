@@ -45,6 +45,7 @@ describe('course focus mode', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Скрыть панели' }))
     expect(screen.queryByTestId('side-nav')).toBeNull()
     expect(screen.queryByTestId('course-list')).toBeNull()
+    expect(screen.getByTestId('course-item').parentElement).toHaveClass('mx-auto')
 
     fireEvent.click(screen.getByRole('button', { name: 'Показать панели' }))
     expect(screen.getByTestId('side-nav')).toBeInTheDocument()

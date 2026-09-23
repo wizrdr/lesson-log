@@ -27,7 +27,7 @@ export function CourseLayout() {
       {showItem && (
         <section data-testid="course-panel" className={cn('flex min-w-0 flex-1 flex-col', desktop && 'overflow-y-auto')}>
           <div className={cn('paper flex flex-1 flex-col', desktop && 'px-8')}>
-            {slug ? <CourseItemPage key={slug} embedded={desktop && !focus} action={tablet ? <FocusToggle on={focus} /> : undefined} /> : <Placeholder />}
+            {slug ? <CourseItemPage key={slug} embedded={desktop && !focus} centered={focus} action={tablet ? <FocusToggle on={focus} /> : undefined} /> : <Placeholder />}
           </div>
         </section>
       )}
