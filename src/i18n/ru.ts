@@ -31,6 +31,8 @@ export const ru = {
   'course.cardsInDeck': 'Карточки урока уже в колоде',
   'course.missSaved': 'Ошибка ушла в карточки',
   'course.placeholder': 'вся фраза',
+  'course.focusOn': 'Скрыть панели',
+  'course.focusOff': 'Показать панели',
 
   'login.signin': 'Вход',
   'login.signup': 'Первый вход: создание аккаунта',

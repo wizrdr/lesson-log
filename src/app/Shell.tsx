@@ -1,5 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useLocale, useT, type TextKey } from '@/i18n'
+import { useCourseFocus } from '@/lib/focusMode'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { cn, BeforeLessonIcon, CourseIcon, GlobeIcon, JournalIcon, LessonsIcon, ReviewIcon, type IconProps } from '@/ui'
 import type { ComponentType } from 'react'
@@ -16,9 +17,11 @@ const tabs: { to: string; label: TextKey; Icon: ComponentType<IconProps> }[] = [
 export function Shell() {
   const tablet = useMediaQuery(MQ_TABLET)
   const labels = useMediaQuery(MQ_LAPTOP)
+  const focus = useCourseFocus()
+  const inCourse = useLocation().pathname.startsWith('/course/')
   return (
     <div className={cn('flex h-dvh bg-bg pt-[env(safe-area-inset-top)] text-text', tablet ? 'flex-row' : 'flex-col')}>
-      {tablet && <SideNav labels={labels} />}
+      {tablet && !(focus && inCourse) && <SideNav labels={labels} />}
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="paper flex min-h-full flex-col">
           <Outlet />

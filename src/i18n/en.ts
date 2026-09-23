@@ -31,6 +31,8 @@ export const en: Dictionary = {
   'course.cardsInDeck': 'Lesson cards are already in your deck',
   'course.missSaved': 'Mistake saved as a card',
   'course.placeholder': 'full sentence',
+  'course.focusOn': 'Hide panels',
+  'course.focusOff': 'Show panels',
 
   'login.signin': 'Sign in',
   'login.signup': 'First time: create an account',

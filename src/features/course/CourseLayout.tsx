@@ -1,15 +1,18 @@
 import { useParams } from 'react-router-dom'
-import { MQ_DESKTOP } from '@/app/breakpoints'
+import { MQ_DESKTOP, MQ_TABLET } from '@/app/breakpoints'
 import { useT } from '@/i18n'
+import { setCourseFocus, useCourseFocus } from '@/lib/focusMode'
 import { useMediaQuery } from '@/lib/useMediaQuery'
-import { cn } from '@/ui'
+import { cn, IconButton, PanelLeftIcon } from '@/ui'
 import { CourseItemPage } from './CourseItemPage'
 import { CourseListPage } from './CourseListPage'
 
 export function CourseLayout() {
   const { slug } = useParams()
   const desktop = useMediaQuery(MQ_DESKTOP)
-  const showList = desktop || !slug
+  const tablet = useMediaQuery(MQ_TABLET)
+  const focus = useCourseFocus() && Boolean(slug)
+  const showList = (desktop && !focus) || !slug
   const showItem = desktop || Boolean(slug)
 
   return (
@@ -24,11 +27,20 @@ export function CourseLayout() {
       {showItem && (
         <section data-testid="course-panel" className={cn('flex min-w-0 flex-1 flex-col', desktop && 'overflow-y-auto')}>
           <div className={cn('paper flex flex-1 flex-col', desktop && 'px-8')}>
-            {slug ? <CourseItemPage key={slug} embedded={desktop} /> : <Placeholder />}
+            {slug ? <CourseItemPage key={slug} embedded={desktop && !focus} action={tablet ? <FocusToggle on={focus} /> : undefined} /> : <Placeholder />}
           </div>
         </section>
       )}
     </div>
+  )
+}
+
+function FocusToggle({ on }: { on: boolean }) {
+  const t = useT()
+  return (
+    <IconButton label={t(on ? 'course.focusOff' : 'course.focusOn')} aria-pressed={on} onClick={() => setCourseFocus(!on)}>
+      <PanelLeftIcon />
+    </IconButton>
   )
 }
 

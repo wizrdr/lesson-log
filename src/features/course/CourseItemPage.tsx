@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
 import type { DrillItem } from '../../../supabase/functions/_shared/course-input.ts'
 import { getCourseItem, importCards, loadProgress, saveProgress, type BlockState, type CourseItem, type ProgressMap } from '@/api/course'
@@ -13,9 +13,10 @@ export const CARDS_MARKER = '_cards'
 
 export interface CourseItemPageProps {
   embedded?: boolean
+  action?: ReactNode
 }
 
-export function CourseItemPage({ embedded = false }: CourseItemPageProps) {
+export function CourseItemPage({ embedded = false, action }: CourseItemPageProps) {
   const { slug = '' } = useParams()
   const t = useT()
   const errorText = useErrorText()
@@ -86,6 +87,7 @@ export function CourseItemPage({ embedded = false }: CourseItemPageProps) {
       subtitle={item.subtitle ?? undefined}
       width={embedded ? 'list' : 'lesson'}
       back={embedded ? undefined : { to: '/course', label: t('course.title') }}
+      action={action}
     >
       <div className="max-w-[720px] pb-10" data-testid="course-item">
         {item.body.map((block) => {

@@ -160,3 +160,12 @@ export function SpeakerIcon(props: IconProps) {
     </Icon>
   )
 }
+
+export function PanelLeftIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <path d="M9 4.5v15" />
+    </Icon>
+  )
+}

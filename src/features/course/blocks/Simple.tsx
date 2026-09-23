@@ -66,11 +66,11 @@ export function Table({ block }: { block: TableBlock }) {
 
 export function Dialog({ block }: { block: DialogBlock }) {
   return (
-    <ul className="m-0 list-none px-6 pt-4">
+    <ul className="m-0 grid list-none grid-cols-[max-content_1fr] gap-x-4 px-6 pt-4" data-testid={`dialog-${block.id}`}>
       {block.turns.map((turn, i) => (
-        <li key={i} className="hairline-b grid grid-cols-[4.5rem_1fr] gap-3 py-2">
-          <span className="pt-0.5 text-[11px] leading-6 font-semibold uppercase tracking-[0.08em] text-faint">{turn.who}</span>
-          <p className="m-0 font-serif text-[17px] leading-6">
+        <li key={i} className="hairline-b col-span-2 grid grid-cols-subgrid py-2">
+          <span className="pt-0.5 text-[11px] leading-6 font-semibold whitespace-nowrap uppercase tracking-[0.08em] text-faint">{turn.who}</span>
+          <p className="m-0 min-w-0 font-serif text-[17px] leading-6">
             <span lang="pl" className="font-semibold">{turn.pl}</span> <SayButton text={turn.pl} />
             {turn.gloss && <span className="block text-[15px] italic text-muted">{turn.gloss}</span>}
           </p>
