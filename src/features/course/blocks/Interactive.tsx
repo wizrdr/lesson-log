@@ -91,7 +91,7 @@ export function Checklist({ block, state, onChange }: Props<ChecklistBlock, Chec
           const checked = done[item.id] === true
           return (
             <li key={item.id}>
-              <label className="flex cursor-pointer items-start gap-3 py-2">
+              <label className="relative flex cursor-pointer items-start gap-3 py-2">
                 <input
                   type="checkbox"
                   className="peer sr-only"

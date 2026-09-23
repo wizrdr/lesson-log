@@ -154,6 +154,12 @@ describe('CourseItemPage', () => {
     expect(saveProgress).toHaveBeenLastCalledWith('item-3', 'hw', { done: { c1: true } })
   })
 
+  it('anchors the visually hidden checkbox so it cannot stretch the page scroll', async () => {
+    renderAt()
+    await screen.findByTestId('checklist-hw')
+    expect(screen.getByRole('checkbox').closest('label')).toHaveClass('relative')
+  })
+
   it('rolls back and shows an error when saving fails', async () => {
     saveProgress.mockRejectedValue(new Error('offline'))
     renderAt()
