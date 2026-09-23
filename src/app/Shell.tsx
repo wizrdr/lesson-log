@@ -1,12 +1,13 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useLocale, useT, type TextKey } from '@/i18n'
 import { useMediaQuery } from '@/lib/useMediaQuery'
-import { cn, BeforeLessonIcon, GlobeIcon, JournalIcon, LessonsIcon, ReviewIcon, type IconProps } from '@/ui'
+import { cn, BeforeLessonIcon, CourseIcon, GlobeIcon, JournalIcon, LessonsIcon, ReviewIcon, type IconProps } from '@/ui'
 import type { ComponentType } from 'react'
 import { MQ_LAPTOP, MQ_TABLET } from './breakpoints'
 
 const tabs: { to: string; label: TextKey; Icon: ComponentType<IconProps> }[] = [
   { to: '/', label: 'tabs.lessons', Icon: LessonsIcon },
+  { to: '/course', label: 'tabs.course', Icon: CourseIcon },
   { to: '/journal', label: 'tabs.journal', Icon: JournalIcon },
   { to: '/review', label: 'tabs.review', Icon: ReviewIcon },
   { to: '/before-lesson', label: 'tabs.beforeLesson', Icon: BeforeLessonIcon },
@@ -45,7 +46,7 @@ function SideNav({ labels }: { labels: boolean }) {
           <li key={to}>
             <NavLink
               to={to}
-              end
+              end={to !== '/course'}
               aria-label={t(label)}
               title={labels ? undefined : t(label)}
               className={({ isActive }) =>
@@ -86,13 +87,13 @@ function TabBar() {
   return (
     <nav
       data-testid="tab-bar"
-      className="grid grid-cols-4 border-t border-border bg-bg px-2 pt-2.5 pb-[max(env(safe-area-inset-bottom),10px)]"
+      className="grid grid-cols-5 border-t border-border bg-bg px-2 pt-2.5 pb-[max(env(safe-area-inset-bottom),10px)]"
     >
       {tabs.map(({ to, label, Icon }) => (
         <NavLink
           key={to}
           to={to}
-          end
+          end={to !== '/course'}
           className={({ isActive }) =>
             cn(
               'flex h-11 flex-col items-center justify-center gap-1 text-[11px] focus-ring-inset',

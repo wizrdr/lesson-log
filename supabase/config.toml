@@ -40,3 +40,7 @@ verify_jwt = false
 [functions.ll-cards]
 import_map = "./functions/deno.json"
 verify_jwt = false
+
+[functions.ll-course]
+import_map = "./functions/deno.json"
+verify_jwt = false

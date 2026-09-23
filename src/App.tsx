@@ -5,6 +5,7 @@ import { LessonsLayout } from '@/features/lessons/LessonsLayout'
 import { JournalPage } from '@/features/journal/JournalPage'
 import { ReviewPage } from '@/features/review/ReviewPage'
 import { BeforeLessonPage } from '@/features/before-lesson/BeforeLessonPage'
+import { CourseLayout } from '@/features/course/CourseLayout'
 
 export default function App() {
   return (
@@ -22,6 +23,8 @@ export default function App() {
           <Route path="/journal" element={<JournalPage />} />
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/before-lesson" element={<BeforeLessonPage />} />
+          <Route path="/course" element={<CourseLayout />} />
+          <Route path="/course/:slug" element={<CourseLayout />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -16,7 +16,7 @@ export interface SupabaseMockState {
   ops(index: number): Record<string, unknown[]>
 }
 
-const METHODS = ['select', 'insert', 'update', 'delete', 'eq', 'lte', 'is', 'not', 'or', 'order', 'limit', 'single']
+const METHODS = ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'gt', 'gte', 'lte', 'is', 'not', 'or', 'order', 'limit', 'single']
 
 export function createSupabaseMock() {
   const state: SupabaseMockState = {

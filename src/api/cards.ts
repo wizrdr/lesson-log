@@ -35,18 +35,41 @@ interface DueRow extends CardRow {
   entry: Omit<DueCardEntry, 'lesson'> & { deleted_at: string | null; lesson: DueCardEntry['lesson'] | DueCardEntry['lesson'][] }
 }
 
-export async function listDueCards(limit = 50): Promise<DueCard[]> {
-  const result = await client()
-    .from('cards')
-    .select(DUE_SELECT)
-    .lte('due', new Date().toISOString())
-    .is('entry.deleted_at', null)
-    .order('due')
-    .limit(limit)
-  return unwrap<DueRow[]>(result, 'loadCards').map(({ entry: { deleted_at: _deleted, lesson, ...entry }, ...card }) => ({
+export const NEW_PER_DAY = 20
+
+export function startOfLocalDay(now: Date): Date {
+  const d = new Date(now)
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+async function introducedToday(now: Date): Promise<number> {
+  return counted(
+    await client()
+      .from('cards')
+      .select('entry_id', { count: 'exact', head: true })
+      .gte('first_review_at', startOfLocalDay(now).toISOString()),
+  )
+}
+
+function flatten(rows: DueRow[]): DueCard[] {
+  return rows.map(({ entry: { deleted_at: _deleted, lesson, ...entry }, ...card }) => ({
     ...card,
     entry: { ...entry, lesson: one(lesson) },
   }))
+}
+
+// New cards (state 0) are capped per local day, like Anki's new-cards limit; reviews are not.
+export async function listDueCards(limit = 50, now = new Date()): Promise<DueCard[]> {
+  const quota = Math.max(0, NEW_PER_DAY - (await introducedToday(now)))
+  const due = () => client().from('cards').select(DUE_SELECT).lte('due', now.toISOString()).is('entry.deleted_at', null).order('due')
+  const [reviews, fresh] = await Promise.all([
+    due().gt('state', 0).limit(limit),
+    quota > 0 ? due().eq('state', 0).limit(Math.min(quota, limit)) : Promise.resolve({ data: [] as DueRow[], error: null }),
+  ])
+  return flatten([...unwrap<DueRow[]>(reviews, 'loadCards'), ...unwrap<DueRow[]>(fresh, 'loadCards')])
+    .sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : 0))
+    .slice(0, limit)
 }
 
 const scheduler = fsrs()
@@ -81,6 +104,7 @@ export function scheduleCard(row: CardRow, grade: Grade, now = new Date()): Card
     lapses: next.lapses,
     state: next.state as CardRow['state'],
     last_review: (next.last_review ?? now).toISOString(),
+    first_review_at: row.first_review_at ?? (row.state === 0 ? now.toISOString() : null),
   }
 }
 
@@ -124,12 +148,15 @@ function counted(result: { count: number | null; error: { message: string } | nu
   return result.count ?? 0
 }
 
-export async function deckStats(): Promise<DeckStats> {
+export async function deckStats(now = new Date()): Promise<DeckStats> {
   const cards = () => client().from('cards').select('entry_id', { count: 'exact', head: true })
-  const [due, fresh, total] = await Promise.all([
-    cards().lte('due', new Date().toISOString()).then(counted),
-    cards().eq('state', 0).then(counted),
+  const at = now.toISOString()
+  const [reviewsDue, newDue, introduced, total] = await Promise.all([
+    cards().gt('state', 0).lte('due', at).then(counted),
+    cards().eq('state', 0).lte('due', at).then(counted),
+    cards().gte('first_review_at', startOfLocalDay(now).toISOString()).then(counted),
     cards().then(counted),
   ])
-  return { due, new: fresh, total }
+  const fresh = Math.min(newDue, Math.max(0, NEW_PER_DAY - introduced))
+  return { due: reviewsDue + fresh, new: fresh, total }
 }

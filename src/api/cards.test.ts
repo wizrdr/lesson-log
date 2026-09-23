@@ -11,7 +11,7 @@ vi.mock('@/lib/supabase', () => ({
   supabaseConfigured: true,
 }))
 
-import { addToDeck, deckStats, formatInterval, listDueCards, previewIntervals, removeFromDeck, reviewCard, scheduleCard } from './cards'
+import { addToDeck, deckStats, formatInterval, listDueCards, NEW_PER_DAY, previewIntervals, removeFromDeck, reviewCard, scheduleCard, startOfLocalDay } from './cards'
 
 const now = new Date('2026-09-05T10:00:00Z')
 
@@ -28,6 +28,7 @@ function card(over: Partial<CardRow> = {}): CardRow {
     reps: 0,
     lapses: 0,
     state: 0,
+    first_review_at: null,
     last_review: null,
     ...over,
   }
@@ -62,6 +63,15 @@ describe('scheduleCard', () => {
   })
 })
 
+describe('first_review_at', () => {
+  it('is stamped on the first review of a new card and kept afterwards', () => {
+    expect(scheduleCard(card(), 3, now).first_review_at).toBe(now.toISOString())
+    const earlier = '2026-09-01T08:00:00.000Z'
+    expect(scheduleCard(card({ state: 2, first_review_at: earlier }), 3, now).first_review_at).toBe(earlier)
+    expect(scheduleCard(card({ state: 2 }), 3, now).first_review_at).toBeNull()
+  })
+})
+
 describe('reviewCard', () => {
   it('updates the row by entry_id with every FSRS field and last_review', async () => {
     state().results.push({ error: null })
@@ -72,7 +82,7 @@ describe('reviewCard', () => {
     const ops = state().ops(0)
     const patch = ops.update[0] as Record<string, unknown>
     expect(Object.keys(patch).sort()).toEqual(
-      ['difficulty', 'due', 'elapsed_days', 'lapses', 'last_review', 'learning_steps', 'reps', 'scheduled_days', 'stability', 'state'].sort(),
+      ['difficulty', 'due', 'elapsed_days', 'first_review_at', 'lapses', 'last_review', 'learning_steps', 'reps', 'scheduled_days', 'stability', 'state'].sort(),
     )
     expect(patch.last_review).toBe(now.toISOString())
     expect(ops.eq).toEqual(['entry_id', 'e1'])
@@ -130,33 +140,28 @@ describe('deck membership', () => {
 })
 
 describe('listDueCards', () => {
+  const entry = (id: string) => ({ id, type: 'vocab', original: id, corrected: null, explanation: null, quote: null, lang: null, deleted_at: null, lesson: null })
+
   it('filters by due, excludes deleted entries and flattens the lesson relation', async () => {
-    state().results.push({
-      data: [
-        {
-          ...card(),
-          entry: {
-            id: 'e1',
-            type: 'vocab',
-            original: 'zeszyt',
-            corrected: 'тетрадь',
-            explanation: null,
-            quote: null,
-            lang: null,
-            deleted_at: null,
-            lesson: [{ date: '2026-09-05', tutor: { name: 'Анна', language: 'pl' } }],
+    state().results.push(
+      { count: 0 },
+      {
+        data: [
+          {
+            ...card({ state: 2 }),
+            entry: { ...entry('e1'), original: 'zeszyt', corrected: 'тетрадь', lesson: [{ date: '2026-09-05', tutor: { name: 'Анна', language: 'pl' } }] },
           },
-        },
-        { ...card({ entry_id: 'e2' }), entry: { id: 'e2', type: 'rule', original: 'r', corrected: null, explanation: null, quote: null, lang: null, deleted_at: null, lesson: null } },
-      ],
-    })
-    const cards = await listDueCards(10)
-    const ops = state().ops(0)
-    expect(String(ops.select[0])).toContain('entries!inner')
-    expect(ops.lte[0]).toBe('due')
-    expect(ops.is).toEqual(['entry.deleted_at', null])
-    expect(ops.order).toEqual(['due'])
-    expect(ops.limit).toEqual([10])
+        ],
+      },
+      { data: [{ ...card({ entry_id: 'e2' }), entry: { ...entry('e2'), type: 'rule', original: 'r' } }] },
+    )
+    const cards = await listDueCards(10, now)
+    const reviews = state().ops(1)
+    expect(String(reviews.select[0])).toContain('entries!inner')
+    expect(reviews.lte[0]).toBe('due')
+    expect(reviews.is).toEqual(['entry.deleted_at', null])
+    expect(reviews.gt).toEqual(['state', 0])
+    expect(state().ops(2).eq).toEqual(['state', 0])
     expect(cards[0].entry).toEqual({
       id: 'e1',
       type: 'vocab',
@@ -169,19 +174,48 @@ describe('listDueCards', () => {
     })
     expect(cards[1].entry.lesson).toBeNull()
   })
+
+  it('caps new cards at what is left of the daily quota', async () => {
+    state().results.push({ count: NEW_PER_DAY - 3 }, { data: [] }, { data: [] })
+    await listDueCards(50, now)
+    expect(state().ops(0).gte).toEqual(['first_review_at', startOfLocalDay(now).toISOString()])
+    expect(state().ops(2).limit).toEqual([3])
+  })
+
+  it('skips the new-card query once the quota is used up', async () => {
+    state().results.push({ count: NEW_PER_DAY }, { data: [{ ...card({ state: 2 }), entry: entry('e1') }] })
+    const cards = await listDueCards(50, now)
+    expect(state().calls).toHaveLength(2)
+    expect(cards.map((c) => c.entry_id)).toEqual(['e1'])
+  })
+
+  it('merges reviews and new cards by due date', async () => {
+    const early = new Date(now.getTime() - 60_000).toISOString()
+    state().results.push(
+      { count: 0 },
+      { data: [{ ...card({ entry_id: 'r', state: 2 }), entry: entry('r') }] },
+      { data: [{ ...card({ entry_id: 'n', due: early }), entry: entry('n') }] },
+    )
+    expect((await listDueCards(50, now)).map((c) => c.entry_id)).toEqual(['n', 'r'])
+  })
 })
 
 describe('deckStats', () => {
-  it('counts due, new and total cards', async () => {
-    state().results.push({ count: 3 }, { count: 5 }, { count: 12 })
-    await expect(deckStats()).resolves.toEqual({ due: 3, new: 5, total: 12 })
-    expect(state().calls.map((c) => c.table)).toEqual(['cards', 'cards', 'cards'])
-    expect(state().ops(0).lte[0]).toBe('due')
+  it('counts due reviews plus new cards within the daily quota', async () => {
+    state().results.push({ count: 3 }, { count: 40 }, { count: NEW_PER_DAY - 5 }, { count: 60 })
+    await expect(deckStats(now)).resolves.toEqual({ due: 8, new: 5, total: 60 })
+    expect(state().ops(0).gt).toEqual(['state', 0])
     expect(state().ops(1).eq).toEqual(['state', 0])
+    expect(state().ops(2).gte[0]).toBe('first_review_at')
+  })
+
+  it('reports fewer new cards than the quota when fewer are due', async () => {
+    state().results.push({ count: 0 }, { count: 2 }, { count: 0 }, { count: 2 })
+    await expect(deckStats(now)).resolves.toEqual({ due: 2, new: 2, total: 2 })
   })
 
   it('throws countCards when any query fails', async () => {
-    state().results.push({ count: 3 }, { error: { message: 'timeout' } }, { count: 12 })
-    await expect(deckStats()).rejects.toMatchObject({ code: 'countCards', detail: 'timeout' })
+    state().results.push({ count: 3 }, { error: { message: 'timeout' } }, { count: 0 }, { count: 12 })
+    await expect(deckStats(now)).rejects.toMatchObject({ code: 'countCards', detail: 'timeout' })
   })
 })

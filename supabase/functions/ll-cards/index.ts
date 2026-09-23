@@ -1,47 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
-import { hashKey, isApiKey } from '../_shared/api-key.ts'
+import { type Db, authenticate, orThrow, serviceClient } from '../_shared/auth.ts'
 import { type CardInput, dedupKey, parseCardsBody } from '../_shared/cards-input.ts'
-import { corsHeaders, env, json, readJson } from '../_shared/http.ts'
+import { corsHeaders, json, readJson } from '../_shared/http.ts'
 
-type Db = ReturnType<typeof serviceClient>
 type EntryRef = { id: string; original: string }
 type ExistingRow = EntryRef & { type: string }
-
-function serviceClient() {
-  return createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
-    db: { schema: 'lesson_log' },
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-}
-
-function orThrow<T>(result: { data: T; error: { message: string } | null }, what: string): T {
-  if (result.error) throw new Error(`${what}: ${result.error.message}`)
-  return result.data
-}
-
-async function userFromApiKey(db: Db, key: string): Promise<string | null> {
-  const { data, error } = await db
-    .from('api_keys')
-    .select('id, user_id')
-    .eq('key_hash', await hashKey(key))
-    .is('revoked_at', null)
-    .maybeSingle<{ id: string; user_id: string }>()
-  if (error) throw new Error(`api key lookup failed: ${error.message}`)
-  if (!data) return null
-  await db.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', data.id)
-  return data.user_id
-}
-
-async function userFromJwt(db: Db, jwt: string): Promise<string | null> {
-  const { data, error } = await db.auth.getUser(jwt)
-  return error || !data.user ? null : data.user.id
-}
-
-async function authenticate(db: Db, req: Request): Promise<string | null> {
-  const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '').trim()
-  if (!token) return null
-  return isApiKey(token) ? userFromApiKey(db, token) : userFromJwt(db, token)
-}
 
 async function count(db: Db, userId: string, due: boolean): Promise<number> {
   let query = db.from('cards').select('entry_id', { count: 'exact', head: true }).eq('user_id', userId)

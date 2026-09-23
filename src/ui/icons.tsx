@@ -142,3 +142,21 @@ export function KeyIcon(props: IconProps) {
     </Icon>
   )
 }
+
+export function CourseIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z" />
+      <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z" />
+    </Icon>
+  )
+}
+
+export function SpeakerIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+      <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
+    </Icon>
+  )
+}

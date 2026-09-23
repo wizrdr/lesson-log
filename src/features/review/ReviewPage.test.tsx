@@ -30,6 +30,7 @@ function card(over: Partial<DueCard['entry']> & Pick<DueCard['entry'], 'id' | 't
     lapses: 0,
     state,
     last_review: null,
+    first_review_at: null,
     entry: {
       corrected: null,
       explanation: null,

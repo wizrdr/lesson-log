@@ -51,6 +51,7 @@ export interface CardRow {
   lapses: number
   state: 0 | 1 | 2 | 3
   last_review: string | null
+  first_review_at: string | null
 }
 
 export interface ApiKey {
@@ -62,4 +63,29 @@ export interface ApiKey {
   created_at: string
   last_used_at: string | null
   revoked_at: string | null
+}
+
+export type CourseItemKind = 'lesson' | 'reference' | 'week'
+
+export interface CourseItemRow {
+  id: string
+  course_id: string
+  slug: string
+  kind: CourseItemKind
+  position: number
+  title: string
+  subtitle: string | null
+  week_start: string | null
+  body: unknown
+  cards: unknown
+  created_at: string
+  updated_at: string
+}
+
+export interface CourseProgressRow {
+  user_id: string
+  item_id: string
+  block_id: string
+  state: Record<string, unknown>
+  updated_at: string
 }

@@ -134,6 +134,39 @@
 - [ ] Пост в чатах «Польский язык Варшава» / релокантских / r/learnpolish: 5 тестеров
 - [ ] Метрика Gate 0: первый платящий ИЛИ 10 активных
 
+
+## Курс польского внутри приложения — план от 23.09.2026
+
+Зачем: уроки польского жили HTML-файлами на Mac — прогресс в localStorage, с женой не поделиться. Переносим в раздел «Курс»: контент в Supabase (публикуется скриптом), прогресс у каждого свой, ошибки тренажёра → карточки автоматически, лимит 20 новых карточек в день. Полный план: `~/.claude/plans/jiggly-tumbling-tower.md`. Ветка `course`.
+
+### C1 — данные и публикация
+- [x] Миграция `20260924000000_course.sql`: course_courses, course_members, course_items, course_progress, cards.first_review_at, `is_course_member()` security definer, RLS «читают участники», прогресс свой
+- [x] `src/api/types.ts` синхронно с миграцией
+- [x] `_shared/auth.ts` из ll-cards; ll-cards на него без изменения поведения
+- [x] `_shared/course-input.ts` + Deno-тесты; функция `ll-course` (upsert по course+slug, только владелец)
+- [x] Конвертер HTML → JSON: 3 урока, 4 справки, неделя 1; польские строки до/после совпадают один в один
+- [x] `personal/polski/scripts/push-course.mjs` (+ `--dry-run`), публикация
+- [x] **Решающая:** SQL — владелец видит 9 материалов, не-участник 0, прямая запись запрещена, чужой прогресс — отказ RLS ✓ 24.09
+
+### C2 — экран курса
+- [x] Вкладка «Курс» (5-я в TabBar), `/course`, `/course/:slug`, CourseLayout список | материал
+- [x] Рендер блоков: heading, text, callout, table, dialog, drill, quiz, recall, checklist; инлайн-парсер
+- [x] `answer.ts` (norm/flat/ja/диакритика) + тесты; озвучка `src/lib/speech.ts`
+- [x] Прогресс: select по материалу, upsert по блоку, оптимистично с откатом
+- [ ] lint / test / build зелёные ✓ 24.09 (155 тестов; `ReviewPage` «space flips…» флакает под нагрузкой — 1 из 5 прогонов, до моих правок тоже), деплой после «ок» Максима
+- [ ] **Решающая:** iPhone → пройти задания → на Mac всё на месте; строки в course_progress
+
+### C3 — автоматика
+- [x] Две ошибки без подсказки → ll-cards (JWT) correction, флаг в state
+- [x] Импорт `course_items.cards` при первом открытии урока
+- [x] Лимит 20 новых/день: first_review_at в reviewCard, listDueCards + deckStats
+- [ ] **Решающая:** ошибка → ровно одна карточка в Журнале; ≤20 новых в Повторении
+
+### C4 — жена и уборка
+- [ ] Invite жены (Максим, Dashboard) → course_members learner
+- [ ] Старые HTML/POLSKI.md/PLAN.md в `.trash` vault, ссылки в NOTES, CLAUDE.md, NOW.md
+- [ ] **Решающая:** жена видит курс, прогресс пустой; у Максима не тронут
+
 ## Kill-критерии
 - S0 не пройден.
 - После S3 хотя бы один из двух пользователей говорит «не буду».
