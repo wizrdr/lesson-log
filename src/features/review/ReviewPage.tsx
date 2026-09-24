@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { deckStats, listDueCards, previewIntervals, reviewCard, Grades, type DeckStats, type DueCard, type Grade } from '@/api/cards'
+import { deckStats, listDueCards, previewIntervals, reviewCard, Grades, type DeckLang, type DeckStats, type DueCard, type Grade } from '@/api/cards'
 import type { EntryType } from '@/api/types'
 import { Page } from '@/app/Page'
 import { useErrorText, useLocale, useT, type TextKey } from '@/i18n'
-import { Button, IndexCard, cn, type ButtonVariant } from '@/ui'
+import { Button, IndexCard, Segmented, cn, type ButtonVariant } from '@/ui'
 import { formatLessonDate } from '@/features/lessons/format'
 
 const HINT: Record<EntryType, TextKey> = {
@@ -28,6 +28,22 @@ const RATINGS: { grade: Grade; label: TextKey; variant: ButtonVariant }[] = [
 const KEY_TO_GRADE: Record<string, Grade> = { '1': Grades[0], '2': Grades[1], '3': Grades[2], '4': Grades[3] }
 const SKIP_KEYS = new Set(['s', 'ы'])
 
+const LANG_KEY = 'll.reviewLang'
+const LANGS: { value: DeckLang; label: TextKey }[] = [
+  { value: 'all', label: 'review.langAll' },
+  { value: 'pl', label: 'review.langPl' },
+  { value: 'en', label: 'review.langEn' },
+]
+
+function savedLang(): DeckLang {
+  try {
+    const v = localStorage.getItem(LANG_KEY)
+    return v === 'pl' || v === 'en' ? v : 'all'
+  } catch {
+    return 'all'
+  }
+}
+
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
 }
@@ -41,11 +57,34 @@ export function ReviewPage() {
   const [reviewed, setReviewed] = useState(0)
   const [loadError, setLoadError] = useState<unknown>(null)
   const [saveError, setSaveError] = useState<unknown>(null)
+  const [lang, setLang] = useState<DeckLang>(savedLang)
 
   useEffect(() => {
-    listDueCards().then(setQueue).catch(setLoadError)
-    deckStats().then(setStats).catch(setLoadError)
-  }, [])
+    let alive = true
+    const now = new Date()
+    listDueCards(50, now, lang).then((q) => alive && setQueue(q)).catch((e) => alive && setLoadError(e))
+    deckStats(now, lang).then((s) => alive && setStats(s)).catch((e) => alive && setLoadError(e))
+    return () => {
+      alive = false
+    }
+  }, [lang])
+
+  function pickLang(v: string) {
+    const next = v as DeckLang
+    if (next === lang) return
+    setQueue(null)
+    setStats(null)
+    setLoadError(null)
+    setSaveError(null)
+    setFlipped(false)
+    setReviewed(0)
+    try {
+      localStorage.setItem(LANG_KEY, next)
+    } catch {
+      // private mode: the choice just isn't remembered
+    }
+    setLang(next)
+  }
 
   const current = queue?.[0] ?? null
   const intervals = useMemo(() => (current ? previewIntervals(current, t) : null), [current, t])
@@ -106,6 +145,10 @@ export function ReviewPage() {
 
   return (
     <Page title={t('tabs.review')} subtitle={progress}>
+      <div className="px-6 pt-4">
+        <Segmented options={LANGS.map((l) => ({ value: l.value, label: t(l.label) }))} value={lang} onChange={pickLang} className="max-w-sm" />
+      </div>
+
       {stats && (
         <dl className="m-0 flex gap-6 px-6 pt-6" data-testid="deck-stats">
           <Stat label={t('review.due')} value={stats.due} />

@@ -37,19 +37,47 @@ interface DueRow extends CardRow {
 
 export const NEW_PER_DAY = 20
 
+export type DeckLang = TutorLanguage | 'all'
+type Bucket = TutorLanguage | null
+
+// Each language has its own daily new-card quota, like separate decks in Anki; 'all' sums them.
+const BUCKETS: Bucket[] = ['pl', 'en', null]
+
+function bucketsFor(lang: DeckLang): Bucket[] {
+  return lang === 'all' ? BUCKETS : [lang]
+}
+
 export function startOfLocalDay(now: Date): Date {
   const d = new Date(now)
   d.setHours(0, 0, 0, 0)
   return d
 }
 
-async function introducedToday(now: Date): Promise<number> {
-  return counted(
-    await client()
-      .from('cards')
-      .select('entry_id', { count: 'exact', head: true })
-      .gte('first_review_at', startOfLocalDay(now).toISOString()),
-  )
+const COUNT_SELECT = 'entry_id, entry:entries!inner(lang)'
+
+function countCards() {
+  return client().from('cards').select(COUNT_SELECT, { count: 'exact', head: true })
+}
+
+function dueCards(now: Date) {
+  return client().from('cards').select(DUE_SELECT).lte('due', now.toISOString()).is('entry.deleted_at', null).order('due')
+}
+
+type CountQuery = ReturnType<typeof countCards>
+type DueQuery = ReturnType<typeof dueCards>
+
+function countIn(query: CountQuery, bucket: Bucket | 'all'): CountQuery {
+  if (bucket === 'all') return query
+  return bucket === null ? query.is('entry.lang', null) : query.eq('entry.lang', bucket)
+}
+
+function dueIn(query: DueQuery, bucket: Bucket | 'all'): DueQuery {
+  if (bucket === 'all') return query
+  return bucket === null ? query.is('entry.lang', null) : query.eq('entry.lang', bucket)
+}
+
+async function introducedToday(bucket: Bucket, now: Date): Promise<number> {
+  return counted(await countIn(countCards().gte('first_review_at', startOfLocalDay(now).toISOString()), bucket))
 }
 
 function flatten(rows: DueRow[]): DueCard[] {
@@ -59,15 +87,17 @@ function flatten(rows: DueRow[]): DueCard[] {
   }))
 }
 
-// New cards (state 0) are capped per local day, like Anki's new-cards limit; reviews are not.
-export async function listDueCards(limit = 50, now = new Date()): Promise<DueCard[]> {
-  const quota = Math.max(0, NEW_PER_DAY - (await introducedToday(now)))
-  const due = () => client().from('cards').select(DUE_SELECT).lte('due', now.toISOString()).is('entry.deleted_at', null).order('due')
-  const [reviews, fresh] = await Promise.all([
-    due().gt('state', 0).limit(limit),
-    quota > 0 ? due().eq('state', 0).limit(Math.min(quota, limit)) : Promise.resolve({ data: [] as DueRow[], error: null }),
+export async function listDueCards(limit = 50, now = new Date(), lang: DeckLang = 'all'): Promise<DueCard[]> {
+  const buckets = bucketsFor(lang)
+  const quotas = await Promise.all(buckets.map(async (b) => Math.max(0, NEW_PER_DAY - (await introducedToday(b, now)))))
+  const [reviews, ...fresh] = await Promise.all([
+    dueIn(dueCards(now).gt('state', 0), lang).limit(limit),
+    ...buckets.map((b, i) =>
+      quotas[i] > 0 ? dueIn(dueCards(now).eq('state', 0), b).limit(Math.min(quotas[i], limit)) : Promise.resolve({ data: [] as DueRow[], error: null }),
+    ),
   ])
-  return flatten([...unwrap<DueRow[]>(reviews, 'loadCards'), ...unwrap<DueRow[]>(fresh, 'loadCards')])
+  const rows = [reviews, ...fresh].flatMap((r) => unwrap<DueRow[]>(r, 'loadCards'))
+  return flatten(rows)
     .sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : 0))
     .slice(0, limit)
 }
@@ -148,15 +178,20 @@ function counted(result: { count: number | null; error: { message: string } | nu
   return result.count ?? 0
 }
 
-export async function deckStats(now = new Date()): Promise<DeckStats> {
-  const cards = () => client().from('cards').select('entry_id', { count: 'exact', head: true })
+export async function deckStats(now = new Date(), lang: DeckLang = 'all'): Promise<DeckStats> {
   const at = now.toISOString()
-  const [reviewsDue, newDue, introduced, total] = await Promise.all([
-    cards().gt('state', 0).lte('due', at).then(counted),
-    cards().eq('state', 0).lte('due', at).then(counted),
-    cards().gte('first_review_at', startOfLocalDay(now).toISOString()).then(counted),
-    cards().then(counted),
+  const buckets = bucketsFor(lang)
+  const [reviewsDue, total, ...perBucket] = await Promise.all([
+    countIn(countCards().gt('state', 0).lte('due', at), lang).then(counted),
+    countIn(countCards(), lang).then(counted),
+    ...buckets.map(async (b) => {
+      const [newDue, introduced] = await Promise.all([
+        countIn(countCards().eq('state', 0).lte('due', at), b).then(counted),
+        introducedToday(b, now),
+      ])
+      return Math.min(newDue, Math.max(0, NEW_PER_DAY - introduced))
+    }),
   ])
-  const fresh = Math.min(newDue, Math.max(0, NEW_PER_DAY - introduced))
+  const fresh = perBucket.reduce((sum, n) => sum + n, 0)
   return { due: reviewsDue + fresh, new: fresh, total }
 }

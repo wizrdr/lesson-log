@@ -6,7 +6,9 @@ import { claudeCaller, extractItems } from '../_shared/extract.ts'
 import type { ExtractedItem } from '../_shared/extract-schema.ts'
 import { env, json } from '../_shared/http.ts'
 
-type LessonRow = Pick<Lesson, 'id' | 'user_id' | 'status' | 'audio_path'>
+type LessonRow = Pick<Lesson, 'id' | 'user_id' | 'status' | 'audio_path'> & {
+  tutor: { language: string } | { language: string }[] | null
+}
 type Db = ReturnType<typeof serviceClient>
 
 function serviceClient() {
@@ -27,7 +29,9 @@ async function setStatus(db: Db, lessonId: string, patch: Partial<Lesson>): Prom
 
 async function saveEntries(db: Db, lesson: LessonRow, items: ExtractedItem[]): Promise<number> {
   if (items.length === 0) return 0
+  const tutor = Array.isArray(lesson.tutor) ? lesson.tutor[0] : lesson.tutor
   const rows = items.map((it) => ({
+    lang: tutor?.language ?? null,
     lesson_id: lesson.id,
     user_id: lesson.user_id,
     type: it.type,
@@ -64,7 +68,7 @@ Deno.serve(async (req) => {
   const db = serviceClient()
   const { data: lesson, error: lessonError } = await db
     .from('lessons')
-    .select('id, user_id, status, audio_path')
+    .select('id, user_id, status, audio_path, tutor:tutors(language)')
     .eq('id', lessonId)
     .maybeSingle<LessonRow>()
   if (lessonError) return json(req, 500, { error: 'lesson lookup failed' })

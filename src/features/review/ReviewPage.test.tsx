@@ -9,8 +9,8 @@ const reviewCard = vi.fn()
 
 vi.mock('@/api/cards', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/api/cards')>()),
-  listDueCards: () => listDueCards(),
-  deckStats: () => deckStats(),
+  listDueCards: (...args: unknown[]) => listDueCards(...args),
+  deckStats: (...args: unknown[]) => deckStats(...args),
   reviewCard: (...args: unknown[]) => reviewCard(...args),
 }))
 
@@ -204,5 +204,18 @@ describe('ReviewPage', () => {
     renderPage()
     expect(await screen.findByText('Не удалось загрузить карточки: offline')).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByText('На сегодня всё.')).toBeNull())
+  })
+
+  it('filters the deck by the chosen language and remembers it', async () => {
+    localStorage.removeItem('ll.reviewLang')
+    renderPage()
+    await screen.findByTestId('deck-stats')
+    expect(listDueCards).toHaveBeenLastCalledWith(50, expect.any(Date), 'all')
+    fireEvent.click(screen.getByRole('tab', { name: 'Польский' }))
+    await waitFor(() => expect(listDueCards).toHaveBeenLastCalledWith(50, expect.any(Date), 'pl'))
+    expect(deckStats).toHaveBeenLastCalledWith(expect.any(Date), 'pl')
+    expect(screen.getByRole('tab', { name: 'Польский' })).toHaveAttribute('aria-selected', 'true')
+    expect(localStorage.getItem('ll.reviewLang')).toBe('pl')
+    localStorage.removeItem('ll.reviewLang')
   })
 })

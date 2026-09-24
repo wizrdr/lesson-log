@@ -140,9 +140,9 @@ describe('deck membership', () => {
 })
 
 describe('listDueCards', () => {
-  const entry = (id: string) => ({ id, type: 'vocab', original: id, corrected: null, explanation: null, quote: null, lang: null, deleted_at: null, lesson: null })
+  const entry = (id: string, lang: string | null = 'pl') => ({ id, type: 'vocab', original: id, corrected: null, explanation: null, quote: null, lang, deleted_at: null, lesson: null })
 
-  it('filters by due, excludes deleted entries and flattens the lesson relation', async () => {
+  it('filters by due, language and deleted entries, and flattens the lesson relation', async () => {
     state().results.push(
       { count: 0 },
       {
@@ -155,13 +155,15 @@ describe('listDueCards', () => {
       },
       { data: [{ ...card({ entry_id: 'e2' }), entry: { ...entry('e2'), type: 'rule', original: 'r' } }] },
     )
-    const cards = await listDueCards(10, now)
+    const cards = await listDueCards(10, now, 'pl')
+    expect(state().ops(0).eq).toEqual(['entry.lang', 'pl'])
     const reviews = state().ops(1)
     expect(String(reviews.select[0])).toContain('entries!inner')
     expect(reviews.lte[0]).toBe('due')
     expect(reviews.is).toEqual(['entry.deleted_at', null])
     expect(reviews.gt).toEqual(['state', 0])
-    expect(state().ops(2).eq).toEqual(['state', 0])
+    expect(reviews.eq).toEqual(['entry.lang', 'pl'])
+    expect(state().ops(2).eq).toEqual(['entry.lang', 'pl'])
     expect(cards[0].entry).toEqual({
       id: 'e1',
       type: 'vocab',
@@ -169,53 +171,61 @@ describe('listDueCards', () => {
       corrected: 'тетрадь',
       explanation: null,
       quote: null,
-      lang: null,
+      lang: 'pl',
       lesson: { date: '2026-09-05', tutor: { name: 'Анна', language: 'pl' } },
     })
     expect(cards[1].entry.lesson).toBeNull()
   })
 
-  it('caps new cards at what is left of the daily quota', async () => {
+  it('caps new cards at what is left of the daily quota for that language', async () => {
     state().results.push({ count: NEW_PER_DAY - 3 }, { data: [] }, { data: [] })
-    await listDueCards(50, now)
+    await listDueCards(50, now, 'en')
     expect(state().ops(0).gte).toEqual(['first_review_at', startOfLocalDay(now).toISOString()])
     expect(state().ops(2).limit).toEqual([3])
   })
 
   it('skips the new-card query once the quota is used up', async () => {
     state().results.push({ count: NEW_PER_DAY }, { data: [{ ...card({ state: 2 }), entry: entry('e1') }] })
-    const cards = await listDueCards(50, now)
+    const cards = await listDueCards(50, now, 'pl')
     expect(state().calls).toHaveLength(2)
     expect(cards.map((c) => c.entry_id)).toEqual(['e1'])
   })
 
-  it('merges reviews and new cards by due date', async () => {
+  it('in "all" mode gives every language its own quota and does not filter reviews', async () => {
     const early = new Date(now.getTime() - 60_000).toISOString()
     state().results.push(
+      { count: NEW_PER_DAY },
+      { count: 0 },
       { count: 0 },
       { data: [{ ...card({ entry_id: 'r', state: 2 }), entry: entry('r') }] },
-      { data: [{ ...card({ entry_id: 'n', due: early }), entry: entry('n') }] },
+      { data: [{ ...card({ entry_id: 'en', due: early }), entry: entry('en', 'en') }] },
+      { data: [] },
     )
-    expect((await listDueCards(50, now)).map((c) => c.entry_id)).toEqual(['n', 'r'])
+    const cards = await listDueCards(50, now)
+    expect(state().ops(3).eq).toBeUndefined()
+    expect(state().ops(4).eq).toEqual(['entry.lang', 'en'])
+    expect(state().calls[5].ops).toEqual(expect.arrayContaining([['is', ['entry.lang', null]]]))
+    expect(cards.map((c) => c.entry_id)).toEqual(['en', 'r'])
   })
 })
 
 describe('deckStats', () => {
-  it('counts due reviews plus new cards within the daily quota', async () => {
-    state().results.push({ count: 3 }, { count: 40 }, { count: NEW_PER_DAY - 5 }, { count: 60 })
-    await expect(deckStats(now)).resolves.toEqual({ due: 8, new: 5, total: 60 })
+  it('counts due reviews plus new cards within the daily quota of one language', async () => {
+    state().results.push({ count: 3 }, { count: 60 }, { count: 40 }, { count: NEW_PER_DAY - 5 })
+    await expect(deckStats(now, 'pl')).resolves.toEqual({ due: 8, new: 5, total: 60 })
     expect(state().ops(0).gt).toEqual(['state', 0])
-    expect(state().ops(1).eq).toEqual(['state', 0])
-    expect(state().ops(2).gte[0]).toBe('first_review_at')
+    expect(state().ops(0).eq).toEqual(['entry.lang', 'pl'])
+    expect(state().calls[2].ops).toEqual(expect.arrayContaining([['eq', ['state', 0]], ['eq', ['entry.lang', 'pl']]]))
   })
 
-  it('reports fewer new cards than the quota when fewer are due', async () => {
-    state().results.push({ count: 0 }, { count: 2 }, { count: 0 }, { count: 2 })
-    await expect(deckStats(now)).resolves.toEqual({ due: 2, new: 2, total: 2 })
+  it('sums per-language quotas in "all" mode', async () => {
+    // order: reviews due, total, new due per language (pl, en, none), then introduced today per language
+    state().results.push({ count: 1 }, { count: 90 }, { count: 30 }, { count: 4 }, { count: 1 }, { count: 0 }, { count: 18 }, { count: 0 })
+    await expect(deckStats(now)).resolves.toEqual({ due: 1 + 20 + 2 + 1, new: 23, total: 90 })
   })
 
   it('throws countCards when any query fails', async () => {
-    state().results.push({ count: 3 }, { error: { message: 'timeout' } }, { count: 0 }, { count: 12 })
-    await expect(deckStats(now)).rejects.toMatchObject({ code: 'countCards', detail: 'timeout' })
+    state().results.push({ count: 3 }, { error: { message: 'timeout' } }, { count: 0 }, { count: 0 })
+    await expect(deckStats(now, 'pl')).rejects.toMatchObject({ code: 'countCards', detail: 'timeout' })
   })
 })
