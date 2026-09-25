@@ -138,6 +138,15 @@ export function scheduleCard(row: CardRow, grade: Grade, now = new Date()): Card
   }
 }
 
+// Like Anki's learn-ahead limit: a card due again within this window comes back in the same session.
+export const LEARN_AHEAD_MS = 20 * 60_000
+
+export function requeue<T extends CardRow>(rest: T[], graded: T, now = new Date()): T[] {
+  if (new Date(graded.due).getTime() - now.getTime() > LEARN_AHEAD_MS) return rest
+  const at = rest.findIndex((c) => c.due > graded.due)
+  return at === -1 ? [...rest, graded] : [...rest.slice(0, at), graded, ...rest.slice(at)]
+}
+
 export async function reviewCard<T extends CardRow>(card: T, grade: Grade, now = new Date()): Promise<T> {
   const patch = scheduleCard(card, grade, now)
   check(await client().from('cards').update(patch).eq('entry_id', card.entry_id), 'saveReview')

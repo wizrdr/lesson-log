@@ -11,7 +11,7 @@ vi.mock('@/lib/supabase', () => ({
   supabaseConfigured: true,
 }))
 
-import { addToDeck, deckStats, formatInterval, listDueCards, NEW_PER_DAY, previewIntervals, removeFromDeck, reviewCard, scheduleCard, startOfLocalDay } from './cards'
+import { addToDeck, deckStats, formatInterval, LEARN_AHEAD_MS, listDueCards, NEW_PER_DAY, previewIntervals, removeFromDeck, requeue, reviewCard, scheduleCard, startOfLocalDay } from './cards'
 
 const now = new Date('2026-09-05T10:00:00Z')
 
@@ -69,6 +69,34 @@ describe('first_review_at', () => {
     const earlier = '2026-09-01T08:00:00.000Z'
     expect(scheduleCard(card({ state: 2, first_review_at: earlier }), 3, now).first_review_at).toBe(earlier)
     expect(scheduleCard(card({ state: 2 }), 3, now).first_review_at).toBeNull()
+  })
+})
+
+describe('requeue', () => {
+  const at = (ms: number) => new Date(now.getTime() + ms).toISOString()
+
+  it('puts a card due within the learn-ahead window back by due time', () => {
+    const rest = [card({ entry_id: 'a', due: at(-60_000) }), card({ entry_id: 'b', due: at(5 * 60_000) })]
+    const graded = card({ entry_id: 'x', due: at(60_000) })
+    expect(requeue(rest, graded, now).map((c) => c.entry_id)).toEqual(['a', 'x', 'b'])
+  })
+
+  it('appends when it is due after everything left', () => {
+    const graded = card({ entry_id: 'x', due: at(10 * 60_000) })
+    expect(requeue([card({ entry_id: 'a' })], graded, now).map((c) => c.entry_id)).toEqual(['a', 'x'])
+  })
+
+  it('drops a card due later than the window', () => {
+    const graded = card({ entry_id: 'x', due: at(LEARN_AHEAD_MS + 1) })
+    expect(requeue([card({ entry_id: 'a' })], graded, now).map((c) => c.entry_id)).toEqual(['a'])
+  })
+
+  it('Again on a review card comes back, Easy on a new card does not', () => {
+    const review = card({ state: 2, stability: 10, difficulty: 5, reps: 5, last_review: at(-3 * 86_400_000) })
+    const again = { ...review, ...scheduleCard(review, 1, now) }
+    expect(requeue([], again, now)).toHaveLength(1)
+    const easy = { ...card(), ...scheduleCard(card(), 4, now) }
+    expect(requeue([], easy, now)).toHaveLength(0)
   })
 })
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { deckStats, listDueCards, previewIntervals, reviewCard, Grades, type DeckLang, type DeckStats, type DueCard, type Grade } from '@/api/cards'
+import { deckStats, listDueCards, previewIntervals, requeue, reviewCard, scheduleCard, Grades, type DeckLang, type DeckStats, type DueCard, type Grade } from '@/api/cards'
 import type { EntryType } from '@/api/types'
 import { Page } from '@/app/Page'
 import { useErrorText, useLocale, useT, type TextKey } from '@/i18n'
@@ -106,22 +106,28 @@ export function ReviewPage() {
   }
 
   async function grade(g: Grade) {
-    if (!current || !flipped) return
+    if (!current || !flipped || !queue) return
+    const now = new Date()
+    const graded = { ...current, ...scheduleCard(current, g, now) }
+    const back = requeue(queue.slice(1), graded, now)
+    const returns = back.includes(graded)
+    const before = { queue, stats }
     setSaveError(null)
     setFlipped(false)
-    setQueue((q) => (q ? q.slice(1) : q))
+    setQueue(back)
     setReviewed((n) => n + 1)
-    setStats((s) => (s ? { ...s, due: s.due - 1, new: current.state === 0 ? s.new - 1 : s.new } : s))
+    setStats((s) => (s ? { ...s, due: returns ? s.due : s.due - 1, new: current.state === 0 ? s.new - 1 : s.new } : s))
     try {
-      await reviewCard(current, g)
+      await reviewCard(current, g, now)
     } catch (e) {
       setSaveError(e)
       setFlipped(true)
-      setQueue((q) => [current, ...(q ?? [])])
+      setQueue(before.queue)
       setReviewed((n) => n - 1)
-      setStats((s) => (s ? { ...s, due: s.due + 1, new: current.state === 0 ? s.new + 1 : s.new } : s))
+      setStats(before.stats)
     }
   }
+
 
   useEffect(() => {
     if (!current) return
