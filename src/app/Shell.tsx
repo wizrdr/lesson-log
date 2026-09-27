@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useLocale, useT, type TextKey } from '@/i18n'
 import { useCourseFocus } from '@/lib/focusMode'
 import { useMediaQuery } from '@/lib/useMediaQuery'
-import { cn, BeforeLessonIcon, CourseIcon, GlobeIcon, JournalIcon, LessonsIcon, ReviewIcon, type IconProps } from '@/ui'
+import { cn, BeforeLessonIcon, CourseIcon, GlobeIcon, JournalIcon, LessonsIcon, LevelIcon, ReviewIcon, type IconProps } from '@/ui'
 import type { ComponentType } from 'react'
 import { MQ_LAPTOP, MQ_TABLET } from './breakpoints'
 
@@ -12,6 +12,7 @@ const tabs: { to: string; label: TextKey; Icon: ComponentType<IconProps> }[] = [
   { to: '/journal', label: 'tabs.journal', Icon: JournalIcon },
   { to: '/review', label: 'tabs.review', Icon: ReviewIcon },
   { to: '/before-lesson', label: 'tabs.beforeLesson', Icon: BeforeLessonIcon },
+  { to: '/level', label: 'tabs.level', Icon: LevelIcon },
 ]
 
 export function Shell() {
@@ -90,7 +91,7 @@ function TabBar() {
   return (
     <nav
       data-testid="tab-bar"
-      className="grid grid-cols-5 border-t border-border bg-bg px-2 pt-2.5 pb-[max(env(safe-area-inset-bottom),10px)]"
+      className="grid grid-cols-6 border-t border-border bg-bg px-2 pt-2.5 pb-[max(env(safe-area-inset-bottom),10px)]"
     >
       {tabs.map(({ to, label, Icon }) => (
         <NavLink

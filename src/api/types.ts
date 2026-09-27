@@ -89,3 +89,9 @@ export interface CourseProgressRow {
   state: Record<string, unknown>
   updated_at: string
 }
+
+export interface LevelProfileRow {
+  user_id: string
+  doc: unknown
+  updated_at: string
+}

@@ -169,3 +169,11 @@ export function PanelLeftIcon(props: IconProps) {
     </Icon>
   )
 }
+
+export function LevelIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M5 19.5v-5M10 19.5v-9M15 19.5v-12M20 19.5V4.5" />
+    </Icon>
+  )
+}

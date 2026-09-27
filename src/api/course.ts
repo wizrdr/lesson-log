@@ -44,6 +44,20 @@ export async function loadProgress(itemId: string): Promise<ProgressMap> {
   return Object.fromEntries(rows.map((r) => [r.block_id, r.state]))
 }
 
+export async function loadAllProgress(): Promise<Record<string, ProgressMap>> {
+  const result = await client().from('course_progress').select('item_id, block_id, state')
+  const rows = unwrap<Pick<CourseProgressRow, 'item_id' | 'block_id' | 'state'>[]>(result, 'loadProgress')
+  const out: Record<string, ProgressMap> = {}
+  for (const r of rows) (out[r.item_id] ??= {})[r.block_id] = r.state as BlockState
+  return out
+}
+
+export async function listWeekBodies(): Promise<Record<string, Block[]>> {
+  const result = await client().from('course_items').select('id, body').eq('kind', 'week')
+  const rows = unwrap<{ id: string; body: unknown }[]>(result, 'loadCourse')
+  return Object.fromEntries(rows.map((r) => [r.id, r.body as Block[]]))
+}
+
 export async function saveProgress(itemId: string, blockId: string, state: BlockState): Promise<void> {
   const userId = await currentUserId()
   const result = await client()

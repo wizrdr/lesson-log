@@ -153,7 +153,7 @@
 - [x] Рендер блоков: heading, text, callout, table, dialog, drill, quiz, recall, checklist; инлайн-парсер
 - [x] `answer.ts` (norm/flat/ja/диакритика) + тесты; озвучка `src/lib/speech.ts`
 - [x] Прогресс: select по материалу, upsert по блоку, оптимистично с откатом
-- [ ] lint / test / build зелёные ✓ 24.09 (155 тестов; `ReviewPage` «space flips…» флакает под нагрузкой — 1 из 5 прогонов, до моих правок тоже), деплой после «ок» Максима
+- [x] lint / test / build зелёные ✓ 24.09 (155 тестов; `ReviewPage` «space flips…» флакает под нагрузкой — 1 из 5 прогонов, до моих правок тоже), деплой после «ок» Максима
 - [ ] **Решающая:** iPhone → пройти задания → на Mac всё на месте; строки в course_progress
 
 ### C3 — автоматика
@@ -166,6 +166,22 @@
 - [ ] Invite жены (Максим, Dashboard) → course_members learner
 - [ ] Старые HTML/POLSKI.md/PLAN.md в `.trash` vault, ссылки в NOTES, CLAUDE.md, NOW.md
 - [ ] **Решающая:** жена видит курс, прогресс пустой; у Максима не тронут
+
+### C5 — «Где я» и «Уровень» (27.09)
+План: `~/.claude/plans/jiggly-tumbling-tower.md`.
+- [x] S1 `plan.ts` (статусы недель, следующий шаг) + тесты
+- [x] S1 API `loadAllProgress`, `listWeekBodies`
+- [x] S1 кнопка «Урок пройден» / «Закрыть неделю» (`_done`)
+- [x] S1 `CourseListPage`: карточка «Сейчас», группа «План», галочки у уроков + тесты
+- [x] S2 миграция `level_profiles` + RLS «только своё», типы
+- [x] S2 `_shared/level-input.ts` + deno-тесты, `ll-level`, config.toml
+- [x] S2 `LevelPage` + вкладка 6, иконка, i18n + тесты
+- [x] S2 vault: `level.json`, `scripts/push-level.mjs`, публикация
+- [ ] S3 контент: урок 0004, неделя 1, заготовки недель 2–8, корректура, публикация
+- [ ] lint / test / build / deno check / deno test
+- [ ] **Решающая S1:** iPhone — «Сейчас → Неделя 1», урок отмечен → на Mac с галочкой; строка `_done` в SQL
+- [ ] **Решающая S2:** ✓ SQL 27.09: жена 0 строк, Максим 1; «Уровень» на iPhone читается
+- [ ] **Решающая S3:** тема «будущее время» в «Уровне» ведёт на урок 0004, тренажёр принимает оба варианта
 
 ## Kill-критерии
 - S0 не пройден.

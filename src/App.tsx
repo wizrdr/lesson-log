@@ -6,6 +6,7 @@ import { JournalPage } from '@/features/journal/JournalPage'
 import { ReviewPage } from '@/features/review/ReviewPage'
 import { BeforeLessonPage } from '@/features/before-lesson/BeforeLessonPage'
 import { CourseLayout } from '@/features/course/CourseLayout'
+import { LevelPage } from '@/features/level/LevelPage'
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/before-lesson" element={<BeforeLessonPage />} />
           <Route path="/course" element={<CourseLayout />} />
           <Route path="/course/:slug" element={<CourseLayout />} />
+          <Route path="/level" element={<LevelPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -169,3 +169,24 @@ describe('CourseItemPage', () => {
     expect(screen.getByRole('status')).toBeInTheDocument()
   })
 })
+
+describe('CourseItemPage done bar', () => {
+  beforeEach(() => {
+    saveProgress.mockReset().mockResolvedValue(undefined)
+    importCards.mockReset().mockResolvedValue({ created: 0, skipped: 0 })
+  })
+
+  it('marks the lesson done and can undo it', async () => {
+    renderAt()
+    fireEvent.click(await screen.findByRole('button', { name: 'Урок пройден' }))
+    expect(saveProgress).toHaveBeenCalledWith('item-3', '_done', expect.objectContaining({ done: true, at: expect.any(String) }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Вернуть' }))
+    expect(saveProgress).toHaveBeenLastCalledWith('item-3', '_done', { done: false })
+    expect(await screen.findByRole('button', { name: 'Урок пройден' })).toBeInTheDocument()
+  })
+
+  it('restores the done state with its date', async () => {
+    renderAt({ [CARDS_MARKER]: { imported: true }, _done: { done: true, at: '2026-09-29T18:40:00Z' } })
+    expect(await screen.findByText(/Пройден 29/)).toBeInTheDocument()
+  })
+})

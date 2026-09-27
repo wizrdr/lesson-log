@@ -8,6 +8,8 @@ vi.mock('@/api/course', () => ({
   listCourseItems: () => Promise.resolve([{ id: '1', slug: 'wymowa', kind: 'reference', position: 1, title: 'Wymowa', subtitle: null, week_start: null }]),
   getCourseItem: () => Promise.resolve({ id: '1', slug: 'wymowa', kind: 'reference', position: 1, title: 'Wymowa', subtitle: null, week_start: null, body: [], cards: [] }),
   loadProgress: () => Promise.resolve({}),
+  listWeekBodies: () => Promise.resolve({}),
+  loadAllProgress: () => Promise.resolve({}),
   saveProgress: () => Promise.resolve(),
   importCards: () => Promise.resolve({ created: 0, skipped: 0 }),
 }))

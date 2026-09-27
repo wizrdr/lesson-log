@@ -3,11 +3,14 @@ import { useParams } from 'react-router-dom'
 import type { DrillItem } from '../../../supabase/functions/_shared/course-input.ts'
 import { getCourseItem, importCards, loadProgress, saveProgress, type BlockState, type CourseItem, type ProgressMap } from '@/api/course'
 import { Page } from '@/app/Page'
-import { useErrorText, useT } from '@/i18n'
-import { cn } from '@/ui'
+import { formatLessonDate } from '@/features/lessons/format'
+import { useErrorText, useLocale, useT } from '@/i18n'
+import { Button, CheckIcon, cn } from '@/ui'
 import { Drill } from './blocks/Drill'
 import { Checklist, Quiz, Recall } from './blocks/Interactive'
 import { Callout, Dialog, Heading, Table, Text } from './blocks/Simple'
+import { DONE_MARKER } from './plan'
+import { notifyProgressSaved } from './progressBus'
 
 // Progress row that marks the lesson's cards as imported, so reopening does not re-import.
 export const CARDS_MARKER = '_cards'
@@ -61,7 +64,7 @@ export function CourseItemPage({ embedded = false, action, centered = false }: C
       const before = progressRef.current[blockId]
       setProgress((prev) => ({ ...prev, [blockId]: state }))
       setSaveError(null)
-      saveProgress(item.id, blockId, state).catch((e) => {
+      saveProgress(item.id, blockId, state).then(notifyProgressSaved, (e) => {
         setProgress((prev) => ({ ...prev, [blockId]: before }))
         setSaveError(e)
       })
@@ -108,6 +111,9 @@ export function CourseItemPage({ embedded = false, action, centered = false }: C
             case 'checklist': return <Checklist key={block.id} block={block} state={state} onChange={onChange} />
           }
         })}
+        {item.kind !== 'reference' && (
+          <DoneBar kind={item.kind} state={progress[DONE_MARKER]} onChange={(s) => update(DONE_MARKER, s)} />
+        )}
       </div>
       {(notice !== null || saveError !== null) && (
         <div className="paper hairline-t sticky bottom-0 px-6 py-3" role="status">
@@ -119,5 +125,31 @@ export function CourseItemPage({ embedded = false, action, centered = false }: C
         </div>
       )}
     </Page>
+  )
+}
+
+function DoneBar({ kind, state, onChange }: { kind: 'lesson' | 'week'; state: BlockState | undefined; onChange: (s: BlockState) => void }) {
+  const t = useT()
+  const { lang } = useLocale()
+  const done = state?.done === true
+  const at = typeof state?.at === 'string' ? state.at : null
+  return (
+    <div className="hairline-t mx-6 mt-8 flex flex-wrap items-center gap-3 pt-5" data-testid="done-bar">
+      {done ? (
+        <>
+          <span className="inline-flex items-center gap-2 text-[15px] font-semibold text-ink-green">
+            <CheckIcon size={18} />
+            {at ? t(kind === 'lesson' ? 'course.lessonDoneOn' : 'course.weekDoneOn', { date: formatLessonDate(at, lang) }) : t('course.doneMark')}
+          </span>
+          <Button variant="ghost" size="sm" onClick={() => onChange({ done: false })}>
+            {t('course.undoDone')}
+          </Button>
+        </>
+      ) : (
+        <Button variant="secondary" onClick={() => onChange({ done: true, at: new Date().toISOString() })}>
+          {t(kind === 'lesson' ? 'course.lessonDone' : 'course.weekDone')}
+        </Button>
+      )}
+    </div>
   )
 }

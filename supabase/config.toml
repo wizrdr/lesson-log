@@ -44,3 +44,7 @@ verify_jwt = false
 [functions.ll-course]
 import_map = "./functions/deno.json"
 verify_jwt = false
+
+[functions.ll-level]
+import_map = "./functions/deno.json"
+verify_jwt = false
