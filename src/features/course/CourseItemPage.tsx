@@ -9,6 +9,7 @@ import { Button, CheckIcon, cn } from '@/ui'
 import { Drill } from './blocks/Drill'
 import { Checklist, Quiz, Recall } from './blocks/Interactive'
 import { Callout, Dialog, Heading, Table, Text } from './blocks/Simple'
+import { missCard } from './missCard'
 import { DONE_MARKER } from './plan'
 import { notifyProgressSaved } from './progressBus'
 
@@ -75,8 +76,7 @@ export function CourseItemPage({ embedded = false, action, centered = false }: C
   const onMiss = useCallback(
     (drillItem: DrillItem, typed: string) => {
       if (!item || !typed) return
-      const explanation = [drillItem.note, `[${item.slug}]`].filter(Boolean).join(' ')
-      importCards([{ type: 'correction', original: typed, corrected: drillItem.answers[0], explanation, lang: 'pl' }])
+      importCards([missCard(drillItem, item.slug)])
         .then(() => setNotice(t('course.missSaved')))
         .catch(setSaveError)
     },

@@ -225,6 +225,10 @@ export const en: Dictionary = {
   'review.done': 'Done for today.',
   'review.session': 'Reviewed this session — {cards}.',
   'review.manual': 'My card',
+  'review.delete': 'Delete card',
+  'review.deleteConfirm': 'Delete for sure?',
+  'review.deleteCancel': 'Cancel',
+  'review.deleted': 'Card removed from the deck. The entry stays in the journal.',
 
   'interval.lt1m': '<1 min',
   'interval.m': '{n} min',

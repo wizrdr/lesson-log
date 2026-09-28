@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { deckStats, listDueCards, previewIntervals, requeue, reviewCard, scheduleCard, Grades, type DeckLang, type DeckStats, type DueCard, type Grade } from '@/api/cards'
+import { deckStats, listDueCards, previewIntervals, removeFromDeck, requeue, reviewCard, scheduleCard, Grades, type DeckLang, type DeckStats, type DueCard, type Grade } from '@/api/cards'
 import type { EntryType } from '@/api/types'
 import { Page } from '@/app/Page'
 import { useErrorText, useLocale, useT, type TextKey } from '@/i18n'
@@ -58,6 +58,8 @@ export function ReviewPage() {
   const [loadError, setLoadError] = useState<unknown>(null)
   const [saveError, setSaveError] = useState<unknown>(null)
   const [lang, setLang] = useState<DeckLang>(savedLang)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [notice, setNotice] = useState<TextKey | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -101,6 +103,8 @@ export function ReviewPage() {
   function skip() {
     if (!current) return
     setSaveError(null)
+    setConfirmDelete(false)
+    setNotice(null)
     setFlipped(false)
     setQueue((q) => (q && q.length > 1 ? [...q.slice(1), q[0]] : q))
   }
@@ -113,6 +117,8 @@ export function ReviewPage() {
     const returns = back.includes(graded)
     const before = { queue, stats }
     setSaveError(null)
+    setConfirmDelete(false)
+    setNotice(null)
     setFlipped(false)
     setQueue(back)
     setReviewed((n) => n + 1)
@@ -128,6 +134,25 @@ export function ReviewPage() {
     }
   }
 
+  async function remove() {
+    if (!current || !queue) return
+    const before = { queue, stats, flipped }
+    setSaveError(null)
+    setConfirmDelete(false)
+    setFlipped(false)
+    setQueue(queue.slice(1).filter((c) => c.entry_id !== current.entry_id))
+    setStats((s) => (s ? { due: s.due - 1, new: current.state === 0 ? s.new - 1 : s.new, total: s.total - 1 } : s))
+    setNotice('review.deleted')
+    try {
+      await removeFromDeck(current.entry_id)
+    } catch (e) {
+      setSaveError(e)
+      setNotice(null)
+      setQueue(before.queue)
+      setStats(before.stats)
+      setFlipped(before.flipped)
+    }
+  }
 
   useEffect(() => {
     if (!current) return
@@ -181,6 +206,7 @@ export function ReviewPage() {
           <Card card={current} flipped={flipped} onFlip={() => setFlipped(true)} />
 
           {saveError !== null && <p className="text-[13px] leading-5 text-pen-red">{errorText(saveError)}</p>}
+          {notice !== null && saveError === null && <p className="text-[13px] leading-5 text-muted" role="status">{t(notice)}</p>}
 
           {!flipped && (
             <div className="flex flex-col gap-3">
@@ -208,8 +234,26 @@ export function ReviewPage() {
               ))}
             </div>
           )}
+
+          <div className="flex items-center justify-center gap-2" data-testid="delete-card">
+            {confirmDelete ? (
+              <>
+                <Button variant="danger" size="sm" onClick={() => void remove()}>
+                  {t('review.deleteConfirm')}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+                  {t('review.deleteCancel')}
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(true)}>
+                {t('review.delete')}
+              </Button>
+            )}
+          </div>
         </div>
       )}
+      {!current && notice !== null && <p className="px-6 pt-4 text-[13px] leading-5 text-muted" role="status">{t(notice)}</p>}
     </Page>
   )
 }

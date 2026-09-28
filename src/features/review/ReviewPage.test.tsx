@@ -6,12 +6,14 @@ import { ApiError } from '@/api/client'
 const listDueCards = vi.fn()
 const deckStats = vi.fn()
 const reviewCard = vi.fn()
+const removeFromDeck = vi.fn()
 
 vi.mock('@/api/cards', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/api/cards')>()),
   listDueCards: (...args: unknown[]) => listDueCards(...args),
   deckStats: (...args: unknown[]) => deckStats(...args),
   reviewCard: (...args: unknown[]) => reviewCard(...args),
+  removeFromDeck: (...args: unknown[]) => removeFromDeck(...args),
 }))
 
 import { ReviewPage } from './ReviewPage'
@@ -60,6 +62,7 @@ describe('ReviewPage', () => {
     listDueCards.mockReset().mockResolvedValue([correction, vocab])
     deckStats.mockReset().mockResolvedValue({ due: 2, new: 1, total: 7 })
     reviewCard.mockReset().mockImplementation((c: DueCard) => Promise.resolve(c))
+    removeFromDeck.mockReset().mockResolvedValue(undefined)
   })
 
   it('shows the counters, the progress line and the face of the first card as an interactive index card', async () => {
@@ -231,5 +234,31 @@ describe('ReviewPage', () => {
     expect(screen.getByRole('tab', { name: 'Польский' })).toHaveAttribute('aria-selected', 'true')
     expect(localStorage.getItem('ll.reviewLang')).toBe('pl')
     localStorage.removeItem('ll.reviewLang')
+  })
+
+  it('deletes the current card after a confirmation and moves on', async () => {
+    renderPage()
+    await screen.findByTestId('card-face')
+    fireEvent.click(screen.getByRole('button', { name: 'Удалить карточку' }))
+    expect(removeFromDeck).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Точно удалить?' }))
+    expect(removeFromDeck).toHaveBeenCalledWith('e1')
+    expect(await screen.findByTestId('card-face')).toHaveTextContent('zeszyt')
+    expect(screen.getByTestId('deck-stats')).toHaveTextContent('К повторению1Новых0В колоде6')
+    expect(screen.getByRole('status')).toHaveTextContent('Карточка удалена из колоды')
+  })
+
+  it('cancelling keeps the card, and a failed delete brings it back', async () => {
+    renderPage()
+    await screen.findByTestId('card-face')
+    fireEvent.click(screen.getByRole('button', { name: 'Удалить карточку' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }))
+    expect(screen.getByRole('button', { name: 'Удалить карточку' })).toBeInTheDocument()
+
+    removeFromDeck.mockRejectedValueOnce(new ApiError('removeFromDeck', 'boom'))
+    fireEvent.click(screen.getByRole('button', { name: 'Удалить карточку' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Точно удалить?' }))
+    await waitFor(() => expect(screen.getByTestId('card-face')).toHaveTextContent('ja jest'))
+    expect(screen.getByTestId('deck-stats')).toHaveTextContent('В колоде7')
   })
 })

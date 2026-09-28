@@ -225,6 +225,10 @@ export const ru = {
   'review.done': 'На сегодня всё.',
   'review.session': 'Повторено за сессию — {cards}.',
   'review.manual': 'Моя карточка',
+  'review.delete': 'Удалить карточку',
+  'review.deleteConfirm': 'Точно удалить?',
+  'review.deleteCancel': 'Отмена',
+  'review.deleted': 'Карточка удалена из колоды. Запись осталась в журнале.',
 
   'interval.lt1m': '<1 мин',
   'interval.m': '{n} мин',

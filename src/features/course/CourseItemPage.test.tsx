@@ -106,7 +106,7 @@ describe('CourseItemPage', () => {
     expect(screen.getByTestId('drill-score')).toHaveTextContent('1 из 3')
   })
 
-  it('turns two wrong answers into exactly one correction card', async () => {
+  it('turns two wrong answers into exactly one prompt → answer card', async () => {
     renderAt()
     await screen.findByTestId('drill-dopelniacz')
     answer('i2', 'Szukam klucz')
@@ -115,7 +115,7 @@ describe('CourseItemPage', () => {
     answer('i2', 'Szukam kluczem')
     await waitFor(() => expect(importCards).toHaveBeenCalledTimes(1))
     expect(importCards).toHaveBeenCalledWith([
-      { type: 'correction', original: 'Szukam kluczu', corrected: 'Szukam klucza', explanation: 'szukać + D [0003-dopelniacz]', lang: 'pl' },
+      { type: 'vocab', original: 'Я ищу ключ.', corrected: 'Szukam klucza', explanation: 'szukać + D [0003-dopelniacz]', lang: 'pl' },
     ])
     expect(within(itemRow('i2')).getByText(/Правильно: Szukam klucza/)).toBeInTheDocument()
   })
