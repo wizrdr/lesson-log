@@ -35,6 +35,10 @@ const lesson: CourseItem = {
       ],
     },
     { id: 'q1', type: 'quiz', question: 'od ___ do piątku', options: [{ key: 'a', text: 'poniedziałka' }, { key: 'b', text: 'poniedziałku' }], answer: 'b', ok: 'Дни на -u.', bad: 'Нет.' },
+    {
+      id: 'ch', type: 'choice', title: 'Выбери форму',
+      items: [{ id: 'a', prompt: 'Nie ma ___ (cukier).', options: ['cukier', 'cukru', 'cukrem'], answer: 'cukru', note: 'Вещество → -u' }],
+    },
     { id: 'hw', type: 'checklist', title: 'Задание', items: [{ id: 'c1', md: 'Диктант' }] },
   ],
   cards: [{ type: 'vocab', original: 'сахара нет', corrected: 'Nie ma cukru', explanation: null, lang: 'pl' }],
@@ -124,7 +128,7 @@ describe('CourseItemPage', () => {
     renderAt()
     await screen.findByTestId('drill-dopelniacz')
     fireEvent.click(within(itemRow('i2')).getByRole('button', { name: 'Подсказка' }))
-    expect(within(itemRow('i2')).getByText('Первые буквы: S····· k·····')).toBeInTheDocument()
+    expect(within(itemRow('i2')).getByText('Без окончаний: Szuk·· kluc··')).toBeInTheDocument()
     answer('i2', 'Szukam klucz')
     answer('i2', 'Szukam kluczu')
     expect(importCards).not.toHaveBeenCalled()
@@ -188,5 +192,49 @@ describe('CourseItemPage done bar', () => {
   it('restores the done state with its date', async () => {
     renderAt({ [CARDS_MARKER]: { imported: true }, _done: { done: true, at: '2026-09-29T18:40:00Z' } })
     expect(await screen.findByText(/Пройден 29/)).toBeInTheDocument()
+  })
+})
+
+describe('CourseItemPage hints and choice', () => {
+  beforeEach(() => {
+    saveProgress.mockReset().mockResolvedValue(undefined)
+    importCards.mockReset().mockResolvedValue({ created: 1, skipped: 0 })
+  })
+
+  it('climbs the hint ladder: rule, then the answer without endings, then the answer', async () => {
+    renderAt()
+    await screen.findByTestId('drill-dopelniacz')
+    const hintButton = () => within(itemRow('i1')).getByRole('button', { name: 'Подсказка' })
+    fireEvent.click(hintButton())
+    expect(within(itemRow('i1')).getByText('Правило: Сахар — вещество.')).toBeInTheDocument()
+    fireEvent.click(hintButton())
+    expect(within(itemRow('i1')).getByText('Без окончаний: Nie ma cuk··')).toBeInTheDocument()
+    fireEvent.click(hintButton())
+    expect(within(itemRow('i1')).getByText(/Ответ: Nie ma cukru/)).toBeInTheDocument()
+  })
+
+  it('a wrong first pick shows the note and makes one card; the right pick fills the gap', async () => {
+    renderAt()
+    const item = await screen.findByTestId('choice-item-a')
+    fireEvent.click(within(item).getByRole('button', { name: 'cukier' }))
+    expect(within(item).getByText(/Не то\. Вещество → -u/)).toBeInTheDocument()
+    await waitFor(() => expect(importCards).toHaveBeenCalledTimes(1))
+    expect(importCards).toHaveBeenCalledWith([
+      { type: 'vocab', original: 'Nie ma ___ (cukier).', corrected: 'Nie ma cukru.', explanation: 'Вещество → -u [0003-dopelniacz]', lang: 'pl' },
+    ])
+    fireEvent.click(within(item).getByRole('button', { name: 'cukrem' }))
+    fireEvent.click(within(item).getByRole('button', { name: 'cukru' }))
+    expect(importCards).toHaveBeenCalledTimes(1)
+    expect(item).toHaveAttribute('data-done', 'true')
+    expect(item.querySelector('strong')).toHaveTextContent('cukru')
+    expect(within(item).queryByText('(cukier)', { exact: false })).toBeNull()
+    expect(screen.getByTestId('choice-score')).toHaveTextContent('1 из 1')
+  })
+
+  it('restores a solved choice from progress', async () => {
+    renderAt({ [CARDS_MARKER]: { imported: true }, ch: { items: { a: { picked: ['cukru'] } } } })
+    const item = await screen.findByTestId('choice-item-a')
+    expect(item).toHaveAttribute('data-done', 'true')
+    expect(within(item).getByRole('button', { name: 'cukru' })).toBeDisabled()
   })
 })

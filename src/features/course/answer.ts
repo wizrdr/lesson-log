@@ -27,11 +27,23 @@ export function checkAnswer(input: string, answers: string[]): Verdict {
   return { kind: 'bad' }
 }
 
-function mask(word: string): string {
-  return word[0] + '·'.repeat(Math.max(word.length - 1, 0))
+const LETTER = /\p{L}/u
+
+// The learner already knows the stem; the ending is what the drill is about, so that is what stays hidden.
+function hideEnding(word: string): string {
+  const letters = [...word].filter((c) => LETTER.test(c)).length
+  if (letters <= 3) return word
+  let hide = Math.max(2, Math.ceil(letters / 3))
+  const chars = [...word]
+  for (let i = chars.length - 1; i >= 0 && hide > 0; i--) {
+    if (LETTER.test(chars[i])) {
+      chars[i] = '·'
+      hide--
+    }
+  }
+  return chars.join('')
 }
 
-export function hintFor(answer: string, level: 1 | 2): string {
-  const words = answer.split(' ')
-  return words.map((w, i) => (level === 2 && i === 0 ? w : mask(w))).join(' ')
+export function hintFor(answer: string): string {
+  return answer.split(' ').map(hideEnding).join(' ')
 }

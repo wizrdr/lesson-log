@@ -29,9 +29,11 @@ describe('checkAnswer', () => {
 })
 
 describe('hintFor', () => {
-  it('level 1 masks every word, level 2 reveals the first', () => {
-    expect(hintFor('Potrzebuję recepty', 1)).toBe('P········· r······')
-    expect(hintFor('Potrzebuję recepty', 2)).toBe('Potrzebuję r······')
+  it('hides the ending of every word longer than three letters', () => {
+    expect(hintFor('będziemy mieli')).toBe('będzi··· mie··')
+    expect(hintFor('Potrzebuję recepty')).toBe('Potrze···· rece···')
+    expect(hintFor('Czy możecie przyjść do nas')).toBe('Czy może··· przy··· do nas')
+    expect(hintFor('Nie wiem.')).toBe('Nie wi··.')
   })
 })
 

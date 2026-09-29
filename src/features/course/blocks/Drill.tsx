@@ -3,6 +3,8 @@ import type { DrillBlock, DrillItem } from '../../../../supabase/functions/_shar
 import { useT } from '@/i18n'
 import { Button, cn, Input } from '@/ui'
 import { checkAnswer, hintFor } from '../answer'
+import { RichInline } from '../Rich'
+import { seededShuffle } from '../shuffle'
 import type { BlockState } from '@/api/course'
 
 export interface DrillItemState {
@@ -22,18 +24,6 @@ export interface DrillProps {
   state: BlockState | undefined
   onChange: (state: DrillState) => void
   onMiss: (item: DrillItem, typed: string) => void
-}
-
-function seededShuffle(words: string[], seed: string): string[] {
-  let h = 0
-  for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) | 0
-  const out = [...words]
-  for (let i = out.length - 1; i > 0; i--) {
-    h = (h * 1103515245 + 12345) | 0
-    const j = Math.abs(h) % (i + 1)
-    ;[out[i], out[j]] = [out[j], out[i]]
-  }
-  return out
 }
 
 export function Drill({ block, state, onChange, onMiss }: DrillProps) {
@@ -77,7 +67,8 @@ export function Drill({ block, state, onChange, onMiss }: DrillProps) {
   function hint(item: DrillItem) {
     const current = saved[item.id] ?? EMPTY
     if (current.verdict === 'ok') return
-    const level = Math.min(current.hint + 1, 3) as 1 | 2 | 3
+    const step = current.hint === 0 && !item.hint ? 2 : current.hint + 1
+    const level = Math.min(step, 3) as 1 | 2 | 3
     commit(item, { ...current, value: drafts[item.id] ?? current.value, hint: level, verdict: current.verdict === 'near' ? 'near' : null })
     inputs.current[item.id]?.focus()
   }
@@ -89,7 +80,8 @@ export function Drill({ block, state, onChange, onMiss }: DrillProps) {
       return { text: '✗ ' + t('course.correctIs', { a: item.answers[0] }) + (item.note ? ' ' + item.note : ''), tone: 'text-pen-red' }
     if (s.verdict === 'bad') return { text: '✗ ' + t('course.retry') + (item.hint ? ' ' + item.hint : ''), tone: 'text-pen-red' }
     if (s.hint === 3) return { text: t('course.hint3', { a: item.answers[0] }), tone: 'text-amber-text' }
-    if (s.hint > 0) return { text: t(s.hint === 1 ? 'course.hint1' : 'course.hint2', { h: hintFor(item.answers[0], s.hint as 1 | 2) }), tone: 'text-muted' }
+    if (s.hint === 1 && item.hint) return { text: t('course.hint1', { h: item.hint }), tone: 'text-muted' }
+    if (s.hint > 0) return { text: t('course.hint2', { h: hintFor(item.answers[0]) }), tone: 'text-muted' }
     return null
   }
 
@@ -120,7 +112,7 @@ export function Drill({ block, state, onChange, onMiss }: DrillProps) {
             return (
               <li key={item.id} className={cn('py-3', index > 0 && 'hairline-t')} data-testid={`item-${item.id}`} data-verdict={s.verdict ?? ''}>
                 <p className="m-0 pb-2 font-serif text-[17px] leading-6">
-                  {item.prompt}
+                  <RichInline md={item.prompt} />
                   {s.hint > 0 && <span className="pl-2 font-sans text-[11px] text-faint">{t('course.withHint')}</span>}
                 </p>
                 <div className="flex gap-2">

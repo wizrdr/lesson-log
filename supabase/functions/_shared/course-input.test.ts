@@ -67,3 +67,13 @@ Deno.test('duplicate item slugs are rejected', () => {
   const r = parseCourseBody({ course: { slug: 'c', title: 't' }, items: [lesson, lesson] })
   assertEquals(r, { ok: false, error: 'items[1].slug duplicates "0003-dopelniacz"' })
 })
+
+Deno.test('choice blocks need an answer among unique options', () => {
+  const block = (items: unknown[]) => parseBlocks([{ id: 'ch', type: 'choice', items }])
+  const ok = block([{ id: 'a', prompt: 'Jutro ___ gości.', options: ['mamy', 'będziemy mieli'], answer: 'będziemy mieli', note: 'будущее' }])
+  if (!ok.ok) throw new Error(ok.error)
+  assertEquals(ok.value[0], { id: 'ch', type: 'choice', title: null, items: [{ id: 'a', prompt: 'Jutro ___ gości.', options: ['mamy', 'będziemy mieli'], answer: 'będziemy mieli', note: 'будущее' }] })
+  assertEquals(block([{ id: 'a', prompt: 'x', options: ['a', 'b'], answer: 'c' }]).ok, false)
+  assertEquals(block([{ id: 'a', prompt: 'x', options: ['a', 'a'], answer: 'a' }]).ok, false)
+  assertEquals(block([{ id: 'a', prompt: 'x', options: ['a'], answer: 'a' }]).ok, false)
+})

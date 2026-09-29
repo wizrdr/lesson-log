@@ -18,12 +18,14 @@ export interface DrillBlock { id: string; type: 'drill'; title: string | null; b
 export interface QuizOption { key: string; text: string }
 export interface QuizBlock { id: string; type: 'quiz'; question: string; options: QuizOption[]; answer: string; ok: string; bad: string }
 export interface RecallBlock { id: string; type: 'recall'; question: string; answer: string }
+export interface ChoiceItem { id: string; prompt: string; options: string[]; answer: string; note: string | null }
+export interface ChoiceBlock { id: string; type: 'choice'; title: string | null; items: ChoiceItem[] }
 export interface ChecklistItem { id: string; md: string }
 export interface ChecklistBlock { id: string; type: 'checklist'; title: string | null; items: ChecklistItem[] }
 
 export type Block =
   | HeadingBlock | TextBlock | CalloutBlock | TableBlock | DialogBlock
-  | DrillBlock | QuizBlock | RecallBlock | ChecklistBlock
+  | DrillBlock | ChoiceBlock | QuizBlock | RecallBlock | ChecklistBlock
 
 export type BlockType = Block['type']
 
@@ -169,6 +171,24 @@ function parseBlock(raw: unknown, at: string): Parsed<Block> {
       }
       const u = uniqueIds(out, `${at}.items`); if (!u.ok) return u
       return { ok: true, value: { id: bid.value, type: 'drill', title: title.value, bank: bank.value, items: out } }
+    }
+    case 'choice': {
+      const title = optionalText(raw, 'title', at); if (!title.ok) return title
+      const items = records(raw, 'items', at); if (!items.ok) return items
+      const out: ChoiceItem[] = []
+      for (let i = 0; i < items.value.length; i++) {
+        const it = items.value[i]; const ia = `${at}.items[${i}]`
+        const iid = id(it, ia); if (!iid.ok) return iid
+        const prompt = text(it, 'prompt', ia); if (!prompt.ok) return prompt
+        const options = strings(it, 'options', ia, 2); if (!options.ok) return options
+        if (new Set(options.value).size !== options.value.length) return fail(`${ia}.options must be unique`)
+        const answer = text(it, 'answer', ia); if (!answer.ok) return answer
+        if (!options.value.includes(answer.value)) return fail(`${ia}.answer must be one of the options`)
+        const note = optionalText(it, 'note', ia); if (!note.ok) return note
+        out.push({ id: iid.value, prompt: prompt.value, options: options.value, answer: answer.value, note: note.value })
+      }
+      const u = uniqueIds(out, `${at}.items`); if (!u.ok) return u
+      return { ok: true, value: { id: bid.value, type: 'choice', title: title.value, items: out } }
     }
     case 'quiz': {
       const question = text(raw, 'question', at); if (!question.ok) return question

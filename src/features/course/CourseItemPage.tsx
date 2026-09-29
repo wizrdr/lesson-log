@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
-import type { DrillItem } from '../../../supabase/functions/_shared/course-input.ts'
+import type { ChoiceItem, DrillItem } from '../../../supabase/functions/_shared/course-input.ts'
 import { getCourseItem, importCards, loadProgress, saveProgress, type BlockState, type CourseItem, type ProgressMap } from '@/api/course'
 import { Page } from '@/app/Page'
 import { formatLessonDate } from '@/features/lessons/format'
 import { useErrorText, useLocale, useT } from '@/i18n'
 import { Button, CheckIcon, cn } from '@/ui'
+import { Choice } from './blocks/Choice'
 import { Drill } from './blocks/Drill'
 import { Checklist, Quiz, Recall } from './blocks/Interactive'
 import { Callout, Dialog, Heading, Table, Text } from './blocks/Simple'
@@ -83,6 +84,11 @@ export function CourseItemPage({ embedded = false, action, centered = false }: C
     [item, t],
   )
 
+  const onChoiceMiss = useCallback(
+    (choice: ChoiceItem) => onMiss({ id: choice.id, prompt: choice.prompt, answers: [choice.answer], note: choice.note, hint: null }, choice.answer),
+    [onMiss],
+  )
+
   if (loadError !== null) return <p className="px-6 pt-6 text-[13px] leading-5 text-pen-red">{errorText(loadError)}</p>
   if (!item) return <div className="h-24" aria-busy />
 
@@ -106,6 +112,7 @@ export function CourseItemPage({ embedded = false, action, centered = false }: C
             case 'table': return <Table key={block.id} block={block} />
             case 'dialog': return <Dialog key={block.id} block={block} />
             case 'drill': return <Drill key={block.id} block={block} state={state} onChange={onChange} onMiss={onMiss} />
+            case 'choice': return <Choice key={block.id} block={block} state={state} onChange={onChange} onMiss={onChoiceMiss} />
             case 'quiz': return <Quiz key={block.id} block={block} state={state} onChange={onChange} />
             case 'recall': return <Recall key={block.id} block={block} state={state} onChange={onChange} />
             case 'checklist': return <Checklist key={block.id} block={block} state={state} onChange={onChange} />
