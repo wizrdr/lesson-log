@@ -37,7 +37,7 @@ export function Callout({ block }: { block: CalloutBlock }) {
 
 export function Table({ block }: { block: TableBlock }) {
   return (
-    <div className="overflow-x-auto px-6 pt-4">
+    <div className="overflow-x-auto overflow-y-hidden px-6 pt-4 pb-1">
       <table className="w-full border-collapse text-left text-[15px] leading-6">
         <thead>
           <tr className="hairline-b">
