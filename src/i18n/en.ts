@@ -65,6 +65,8 @@ export const en: Dictionary = {
   'course.now': 'Now',
   'course.plan': 'Plan',
   'course.nextStep': 'Next step',
+  'course.today': 'Today',
+  'course.overdue': 'Unchecked from past days: {n}',
   'course.openWeek': 'Open week',
   'course.progress': '{n} of {total}',
   'course.weekClosed': 'Week closed',

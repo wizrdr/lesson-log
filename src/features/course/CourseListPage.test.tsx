@@ -22,7 +22,9 @@ const item = (id: string, kind: CourseListItem['kind'], week_start: string | nul
 const bodies: Record<string, Block[]> = {
   w0: [{ id: 'c', type: 'checklist', title: null, items: [{ id: 'a', md: 'Аркуш' }] }],
   w1: [
-    { id: 'h', type: 'heading', text: 'Вт 29.09 · урок', level: 2 },
+    { id: 'hd', type: 'heading', text: 'Каждый день · письмо от руки', level: 2 },
+    { id: 'd', type: 'checklist', title: null, items: [{ id: 'mo', md: '**Пн 28.09** · SMS другу' }] },
+    { id: 'h', type: 'heading', text: 'Вт 29.09 · 18:00 · урок', level: 2 },
     { id: 'c', type: 'checklist', title: null, items: [{ id: 'a', md: '[Урок 4](/course/l4)' }, { id: 'b', md: 'Устно' }] },
   ],
 }
@@ -37,13 +39,27 @@ beforeEach(() => {
 
 afterEach(() => vi.useRealTimers())
 
-it('shows the current week with its next step and progress', async () => {
+it('shows today\'s steps of the current week instead of a stale one', async () => {
   render(<MemoryRouter><CourseListPage /></MemoryRouter>)
   const now = await screen.findByTestId('course-now')
   expect(within(now).getByText('T w1')).toBeInTheDocument()
-  expect(within(now).getByText('0 из 2')).toBeInTheDocument()
-  expect(within(now).getByText(/Вт 29\.09 · урок/)).toBeInTheDocument()
+  expect(within(now).getByText('0 из 3')).toBeInTheDocument()
+  expect(within(now).getByText('Сегодня')).toBeInTheDocument()
+  const today = within(now).getByTestId('course-today')
+  expect(within(today).getAllByText('Вт 29.09 · 18:00 · урок')).toHaveLength(2)
+  expect(within(today).getByRole('link', { name: 'Урок 4' })).toHaveAttribute('href', '/course/l4')
+  expect(within(today).queryByText(/SMS другу/)).toBeNull()
+  expect(within(now).getByTestId('course-overdue')).toHaveTextContent('Не отмечено за прошлые дни: 1')
+})
+
+it('shows the next step when nothing is due today', async () => {
+  vi.setSystemTime(new Date('2026-09-28T09:00:00'))
+  loadAllProgress.mockResolvedValue({ w1: { d: { done: { mo: true } } } })
+  render(<MemoryRouter><CourseListPage /></MemoryRouter>)
+  const now = await screen.findByTestId('course-now')
+  expect(within(now).getByText(/Вт 29\.09 · 18:00 · урок/)).toBeInTheDocument()
   expect(within(screen.getByTestId('course-next-step')).getByRole('link', { name: 'Урок 4' })).toHaveAttribute('href', '/course/l4')
+  expect(within(now).queryByTestId('course-overdue')).toBeNull()
 })
 
 it('marks closed weeks and finished lessons', async () => {

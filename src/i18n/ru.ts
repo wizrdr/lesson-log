@@ -65,6 +65,8 @@ export const ru = {
   'course.now': 'Сейчас',
   'course.plan': 'План',
   'course.nextStep': 'Следующий шаг',
+  'course.today': 'Сегодня',
+  'course.overdue': 'Не отмечено за прошлые дни: {n}',
   'course.openWeek': 'Открыть неделю',
   'course.progress': '{n} из {total}',
   'course.weekClosed': 'Неделя закрыта',

@@ -106,6 +106,20 @@ function NowCard({ week, after }: { week: WeekPlan; after: WeekPlan | null }) {
             <p className="m-0 inline-flex items-center gap-2 text-[15px] font-semibold text-ink-green">
               <CheckIcon size={18} /> {t('course.weekClosed')}
             </p>
+          ) : week.today.length > 0 ? (
+            <>
+              <p className="m-0 text-[11px] leading-5 font-semibold uppercase tracking-[0.08em] text-faint">{t('course.today')}</p>
+              <ul className="m-0 list-none p-0" data-testid="course-today">
+                {week.today.map((step, i) => (
+                  <li key={i} className="pt-2">
+                    {step.heading && <p className="m-0 text-[11px] leading-5 text-faint">{step.heading}</p>}
+                    <p className="m-0 font-serif text-[16px] leading-6">
+                      <RichInline md={step.md} />
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : week.next ? (
             <>
               <p className="m-0 text-[11px] leading-5 font-semibold uppercase tracking-[0.08em] text-faint">
@@ -118,6 +132,11 @@ function NowCard({ week, after }: { week: WeekPlan; after: WeekPlan | null }) {
             </>
           ) : (
             <p className="m-0 font-serif text-[15px] leading-6 italic text-muted">{t('course.noSteps')}</p>
+          )}
+          {week.overdue > 0 && (
+            <p className="m-0 pt-2 text-[13px] leading-5 text-muted" data-testid="course-overdue">
+              {t('course.overdue', { n: week.overdue })}
+            </p>
           )}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-x-3 pt-2">
