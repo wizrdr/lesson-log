@@ -18,3 +18,7 @@ it('fills the gap so the back is a whole Polish sentence', () => {
 it('strips inline markup from the prompt', () => {
   expect(missCard(item('У меня **болит** {pl:głowa}', ['Boli mnie głowa']), 'x').original).toBe('У меня болит głowa')
 })
+
+it('drops a hint in parentheses that is not next to the gap', () => {
+  expect(missCard(item('Czy ___ pan mówić trochę wolniej? (móc) · *tryb*', ['mógłby']), 'x').corrected).toBe('Czy mógłby pan mówić trochę wolniej?')
+})
