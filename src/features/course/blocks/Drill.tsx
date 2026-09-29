@@ -139,7 +139,7 @@ export function Drill({ block, state, onChange, onMiss }: DrillProps) {
                     </Button>
                   )}
                 </div>
-                {fb && <p className={cn('m-0 pt-1.5 text-[13px] leading-5', fb.tone)}>{fb.text}</p>}
+                {fb && <p className={cn('m-0 pt-1.5 text-[13px] leading-5', fb.tone)}><RichInline md={fb.text} /></p>}
               </li>
             )
           })}

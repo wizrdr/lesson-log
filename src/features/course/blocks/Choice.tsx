@@ -85,9 +85,13 @@ export function Choice({ block, state, onChange, onMiss }: ChoiceProps) {
                 </div>
                 {last !== undefined && (
                   <p className={cn('m-0 pt-1.5 text-[13px] leading-5', done ? 'text-ink-green' : 'text-pen-red')}>
-                    {done
-                      ? '✓ ' + (picked.length > 1 ? t('course.secondTry') + ' ' : '') + (item.note ?? '')
-                      : '✗ ' + t('course.retry') + (item.note ? ' ' + item.note : '')}
+                    <RichInline
+                      md={
+                        done
+                          ? '✓ ' + (picked.length > 1 ? t('course.secondTry') + ' ' : '') + (item.note ?? '')
+                          : '✗ ' + t('course.retry') + (item.note ? ' ' + item.note : '')
+                      }
+                    />
                   </p>
                 )}
               </li>
