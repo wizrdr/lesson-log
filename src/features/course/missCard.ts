@@ -12,12 +12,18 @@ export function fillGap(prompt: string, answer: string): string {
   return prompt.replace(GAP, answer)
 }
 
-// Front is the task as the learner saw it, back is the correct Polish — never the learner's wrong attempt.
-export function missCard(item: DrillItem, lessonSlug: string): CardInput {
+// A gap task without an authored card has no word to recall, so it makes no card.
+export function missCard(item: DrillItem, lessonSlug: string): CardInput | null {
   const prompt = plainText(parseInline(item.prompt)).trim()
   const answer = item.answers[0]
   const base = prompt.split(' · ')[0].trim()
-  const corrected = hasGap(base) ? fillGap(base, answer).replace(/\s*\([^)]*\)/g, '') : answer
+  const gap = hasGap(base)
+  const sentence = gap ? fillGap(base, answer).replace(/\s*\([^)]*\)/g, '') : answer
+  if (item.card) {
+    const explanation = [gap ? sentence : null, `[${lessonSlug}]`].filter(Boolean).join(' ')
+    return { type: 'vocab', original: item.card.front, corrected: item.card.back, explanation, lang: 'pl' }
+  }
+  if (gap) return null
   const explanation = [item.note, `[${lessonSlug}]`].filter(Boolean).join(' ')
-  return { type: 'vocab', original: prompt, corrected, explanation, lang: 'pl' }
+  return { type: 'vocab', original: prompt, corrected: sentence, explanation, lang: 'pl' }
 }

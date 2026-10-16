@@ -13,12 +13,13 @@ export interface CalloutBlock { id: string; type: 'callout'; tone: CalloutTone; 
 export interface TableBlock { id: string; type: 'table'; head: string[]; rows: string[][] }
 export interface DialogTurn { who: string; pl: string; gloss: string | null }
 export interface DialogBlock { id: string; type: 'dialog'; turns: DialogTurn[] }
-export interface DrillItem { id: string; prompt: string; answers: string[]; note: string | null; hint: string | null }
+export interface ItemCard { front: string; back: string }
+export interface DrillItem { id: string; prompt: string; answers: string[]; note: string | null; hint: string | null; card: ItemCard | null }
 export interface DrillBlock { id: string; type: 'drill'; title: string | null; bank: string[]; items: DrillItem[] }
 export interface QuizOption { key: string; text: string }
 export interface QuizBlock { id: string; type: 'quiz'; question: string; options: QuizOption[]; answer: string; ok: string; bad: string }
 export interface RecallBlock { id: string; type: 'recall'; question: string; answer: string }
-export interface ChoiceItem { id: string; prompt: string; options: string[]; answer: string; note: string | null }
+export interface ChoiceItem { id: string; prompt: string; options: string[]; answer: string; note: string | null; card: ItemCard | null }
 export interface ChoiceBlock { id: string; type: 'choice'; title: string | null; items: ChoiceItem[] }
 export interface ChecklistItem { id: string; md: string }
 export interface ChecklistBlock { id: string; type: 'checklist'; title: string | null; items: ChecklistItem[] }
@@ -72,6 +73,15 @@ function optionalText(raw: Record<string, unknown>, key: string, at: string): Pa
   if (v === undefined || v === null) return { ok: true, value: null }
   if (typeof v !== 'string') return fail(`${at}.${key} must be a string`)
   return { ok: true, value: v.trim() || null }
+}
+
+function itemCard(raw: Record<string, unknown>, at: string): Parsed<ItemCard | null> {
+  const v = raw.card
+  if (v === undefined || v === null) return { ok: true, value: null }
+  if (!isRecord(v)) return fail(`${at}.card must be an object`)
+  const front = text(v, 'front', `${at}.card`); if (!front.ok) return front
+  const back = text(v, 'back', `${at}.card`); if (!back.ok) return back
+  return { ok: true, value: { front: front.value, back: back.value } }
 }
 
 function strings(raw: Record<string, unknown>, key: string, at: string, min: number): Parsed<string[]> {
@@ -167,7 +177,8 @@ function parseBlock(raw: unknown, at: string): Parsed<Block> {
         const answers = strings(it, 'answers', ia, 1); if (!answers.ok) return answers
         const note = optionalText(it, 'note', ia); if (!note.ok) return note
         const hint = optionalText(it, 'hint', ia); if (!hint.ok) return hint
-        out.push({ id: iid.value, prompt: prompt.value, answers: answers.value, note: note.value, hint: hint.value })
+        const card = itemCard(it, ia); if (!card.ok) return card
+        out.push({ id: iid.value, prompt: prompt.value, answers: answers.value, note: note.value, hint: hint.value, card: card.value })
       }
       const u = uniqueIds(out, `${at}.items`); if (!u.ok) return u
       return { ok: true, value: { id: bid.value, type: 'drill', title: title.value, bank: bank.value, items: out } }
@@ -185,7 +196,8 @@ function parseBlock(raw: unknown, at: string): Parsed<Block> {
         const answer = text(it, 'answer', ia); if (!answer.ok) return answer
         if (!options.value.includes(answer.value)) return fail(`${ia}.answer must be one of the options`)
         const note = optionalText(it, 'note', ia); if (!note.ok) return note
-        out.push({ id: iid.value, prompt: prompt.value, options: options.value, answer: answer.value, note: note.value })
+        const card = itemCard(it, ia); if (!card.ok) return card
+        out.push({ id: iid.value, prompt: prompt.value, options: options.value, answer: answer.value, note: note.value, card: card.value })
       }
       const u = uniqueIds(out, `${at}.items`); if (!u.ok) return u
       return { ok: true, value: { id: bid.value, type: 'choice', title: title.value, items: out } }

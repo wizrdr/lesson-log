@@ -29,15 +29,15 @@ const lesson: CourseItem = {
     {
       id: 'dopelniacz', type: 'drill', title: 'Тренажёр', bank: ['cukru'],
       items: [
-        { id: 'i1', prompt: 'Сахара нет.', answers: ['Nie ma cukru', 'Cukru nie ma'], note: 'Вещество → -u', hint: 'Сахар — вещество.' },
-        { id: 'i2', prompt: 'Я ищу ключ.', answers: ['Szukam klucza'], note: 'szukać + D', hint: null },
-        { id: 'i3', prompt: 'Я учу польский.', answers: ['Uczę się polskiego'], note: null, hint: null },
+        { id: 'i1', prompt: 'Сахара нет.', answers: ['Nie ma cukru', 'Cukru nie ma'], note: 'Вещество → -u', hint: 'Сахар — вещество.', card: null },
+        { id: 'i2', prompt: 'Я ищу ключ.', answers: ['Szukam klucza'], note: 'szukać + D', hint: null, card: null },
+        { id: 'i3', prompt: 'Я учу польский.', answers: ['Uczę się polskiego'], note: null, hint: null, card: null },
       ],
     },
     { id: 'q1', type: 'quiz', question: 'od ___ do piątku', options: [{ key: 'a', text: 'poniedziałka' }, { key: 'b', text: 'poniedziałku' }], answer: 'b', ok: 'Дни на -u.', bad: 'Нет.' },
     {
       id: 'ch', type: 'choice', title: 'Выбери форму',
-      items: [{ id: 'a', prompt: 'Nie ma ___ (cukier).', options: ['cukier', 'cukru', 'cukrem'], answer: 'cukru', note: 'Вещество → -u' }],
+      items: [{ id: 'a', prompt: 'Nie ma ___ (cukier).', options: ['cukier', 'cukru', 'cukrem'], answer: 'cukru', note: 'Вещество → -u', card: { front: 'сахара нет (вещество → -u)', back: 'nie ma cukru' } }],
     },
     { id: 'hw', type: 'checklist', title: 'Задание', items: [{ id: 'c1', md: 'Диктант' }] },
   ],
@@ -220,7 +220,7 @@ describe('CourseItemPage hints and choice', () => {
     expect(within(item).getByText(/Не то\. Вещество → -u/)).toBeInTheDocument()
     await waitFor(() => expect(importCards).toHaveBeenCalledTimes(1))
     expect(importCards).toHaveBeenCalledWith([
-      { type: 'vocab', original: 'Nie ma ___ (cukier).', corrected: 'Nie ma cukru.', explanation: 'Вещество → -u [0003-dopelniacz]', lang: 'pl' },
+      { type: 'vocab', original: 'сахара нет (вещество → -u)', corrected: 'nie ma cukru', explanation: 'Nie ma cukru. [0003-dopelniacz]', lang: 'pl' },
     ])
     fireEvent.click(within(item).getByRole('button', { name: 'cukrem' }))
     fireEvent.click(within(item).getByRole('button', { name: 'cukru' }))

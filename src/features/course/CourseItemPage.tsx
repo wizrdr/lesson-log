@@ -76,8 +76,9 @@ export function CourseItemPage({ embedded = false, action, centered = false }: C
 
   const onMiss = useCallback(
     (drillItem: DrillItem, typed: string) => {
-      if (!item || !typed) return
-      importCards([missCard(drillItem, item.slug)])
+      const card = item && typed ? missCard(drillItem, item.slug) : null
+      if (!card) return
+      importCards([card])
         .then(() => setNotice(t('course.missSaved')))
         .catch(setSaveError)
     },
@@ -85,7 +86,7 @@ export function CourseItemPage({ embedded = false, action, centered = false }: C
   )
 
   const onChoiceMiss = useCallback(
-    (choice: ChoiceItem) => onMiss({ id: choice.id, prompt: choice.prompt, answers: [choice.answer], note: choice.note, hint: null }, choice.answer),
+    (choice: ChoiceItem) => onMiss({ id: choice.id, prompt: choice.prompt, answers: [choice.answer], note: choice.note, hint: null, card: choice.card }, choice.answer),
     [onMiss],
   )
 

@@ -72,8 +72,16 @@ Deno.test('choice blocks need an answer among unique options', () => {
   const block = (items: unknown[]) => parseBlocks([{ id: 'ch', type: 'choice', items }])
   const ok = block([{ id: 'a', prompt: 'Jutro ___ gości.', options: ['mamy', 'będziemy mieli'], answer: 'będziemy mieli', note: 'будущее' }])
   if (!ok.ok) throw new Error(ok.error)
-  assertEquals(ok.value[0], { id: 'ch', type: 'choice', title: null, items: [{ id: 'a', prompt: 'Jutro ___ gości.', options: ['mamy', 'będziemy mieli'], answer: 'będziemy mieli', note: 'будущее' }] })
+  assertEquals(ok.value[0], { id: 'ch', type: 'choice', title: null, items: [{ id: 'a', prompt: 'Jutro ___ gości.', options: ['mamy', 'będziemy mieli'], answer: 'będziemy mieli', note: 'будущее', card: null }] })
   assertEquals(block([{ id: 'a', prompt: 'x', options: ['a', 'b'], answer: 'c' }]).ok, false)
   assertEquals(block([{ id: 'a', prompt: 'x', options: ['a', 'a'], answer: 'a' }]).ok, false)
   assertEquals(block([{ id: 'a', prompt: 'x', options: ['a'], answer: 'a' }]).ok, false)
+})
+
+Deno.test('drill and choice items take an optional card with front and back', () => {
+  const card = { front: 'перевести (сов. вид)', back: 'przetłumaczyć' }
+  const r = parseBlocks([{ id: 'd', type: 'drill', items: [{ id: 'a', prompt: 'muszę ___', answers: ['przetłumaczyć'], card }] }])
+  if (!r.ok) throw new Error(r.error)
+  assertEquals(r.value[0].type === 'drill' && r.value[0].items[0].card, card)
+  assertEquals(parseBlocks([{ id: 'd', type: 'drill', items: [{ id: 'a', prompt: 'p', answers: ['a'], card: { front: 'x' } }] }]), { ok: false, error: 'body[0].items[0].card.back must be a non-empty string' })
 })
